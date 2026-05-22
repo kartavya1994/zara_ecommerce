@@ -15,7 +15,7 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -33,19 +33,18 @@ export default function Navbar() {
     <>
       <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
         <div className={styles.topBar}>
-          <span>FREE SHIPPING ON ORDERS OVER £50</span>
+          <span>Complimentary shipping on orders over ₹3,000 &nbsp;·&nbsp; Worldwide delivery available</span>
         </div>
-
         <nav className={styles.nav}>
           <button className={styles.iconBtn} onClick={toggleMobileMenu} aria-label="Menu">
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileMenuOpen ? <X size={18} strokeWidth={1.5} /> : <Menu size={18} strokeWidth={1.5} />}
           </button>
 
           <div className={styles.navLinks}>
             {categories.map(cat => (
               <Link
                 key={cat.id}
-                to={`/category/${cat.slug}`}
+                to={cat.id === 'themes' ? '/collections' : `/category/${cat.slug}`}
                 className={`${styles.navLink} ${cat.id === 'sale' ? styles.saleLink : ''}`}
               >
                 {cat.label}
@@ -53,63 +52,57 @@ export default function Navbar() {
             ))}
           </div>
 
-          <Link to="/" className={styles.logo}>ZARR</Link>
+          <Link to="/" className={styles.logo}>
+            <span className={styles.logoMain}>Regent & Row</span>
+            <span className={styles.logoSub}>Pure Linen</span>
+          </Link>
 
           <div className={styles.actions}>
             <button className={styles.iconBtn} onClick={toggleSearch} aria-label="Search">
-              <Search size={18} />
+              <Search size={17} strokeWidth={1.5} />
             </button>
             <Link to="/wishlist" className={styles.iconBtn} aria-label="Wishlist">
-              <Heart size={18} />
+              <Heart size={17} strokeWidth={1.5} />
               {wishlistCount > 0 && <span className={styles.badge}>{wishlistCount}</span>}
             </Link>
             <Link to="/account" className={styles.iconBtn} aria-label="Account">
-              <User size={18} />
+              <User size={17} strokeWidth={1.5} />
             </Link>
             <button className={styles.iconBtn} onClick={openCart} aria-label="Cart">
-              <ShoppingBag size={18} />
+              <ShoppingBag size={17} strokeWidth={1.5} />
               {cartCount > 0 && <span className={styles.badge}>{cartCount}</span>}
             </button>
           </div>
         </nav>
       </header>
 
-      {/* Search overlay */}
       {searchOpen && (
         <div className={styles.searchOverlay} onClick={closeSearch}>
           <div className={styles.searchBox} onClick={e => e.stopPropagation()}>
             <form onSubmit={handleSearch}>
-              <Search size={18} />
-              <input
-                autoFocus
-                type="text"
-                placeholder="Search for products..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-              <button type="button" onClick={closeSearch}><X size={18} /></button>
+              <Search size={16} strokeWidth={1.5} />
+              <input autoFocus type="text" placeholder="Search linen pieces..."
+                value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              <button type="button" onClick={closeSearch}><X size={16} /></button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className={styles.mobileMenu}>
           <div className={styles.mobileMenuInner}>
             {categories.map(cat => (
-              <Link
-                key={cat.id}
-                to={`/category/${cat.slug}`}
+              <Link key={cat.id}
+                to={cat.id === 'themes' ? '/collections' : `/category/${cat.slug}`}
                 className={`${styles.mobileNavLink} ${cat.id === 'sale' ? styles.saleLink : ''}`}
-                onClick={closeMobileMenu}
-              >
+                onClick={closeMobileMenu}>
                 {cat.label}
               </Link>
             ))}
             <hr className={styles.mobileDivider} />
-            <Link to="/account" className={styles.mobileNavLink} onClick={closeMobileMenu}>MY ACCOUNT</Link>
-            <Link to="/wishlist" className={styles.mobileNavLink} onClick={closeMobileMenu}>WISHLIST ({wishlistCount})</Link>
+            <Link to="/account" className={styles.mobileNavLink} onClick={closeMobileMenu}>My Account</Link>
+            <Link to="/wishlist" className={styles.mobileNavLink} onClick={closeMobileMenu}>Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ''}</Link>
           </div>
         </div>
       )}

@@ -9,49 +9,43 @@ export default function ProductCard({ product }) {
   const { toggleItem, isWishlisted } = useWishlistStore();
   const wishlisted = isWishlisted(product.id);
 
+  const displayPrice = `${product.currency}${product.price.toLocaleString('en-IN')}`;
+  const displayOriginal = product.originalPrice ? `${product.currency}${product.originalPrice.toLocaleString('en-IN')}` : null;
+  const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : null;
+
   return (
-    <div
-      className={styles.card}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className={styles.card} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <div className={styles.imageWrapper}>
         <Link to={`/product/${product.id}`}>
           <img
             src={hovered && product.images[1] ? product.images[1] : product.image}
-            alt={product.name}
-            className={styles.image}
-            loading="lazy"
+            alt={product.name} className={styles.image} loading="lazy"
           />
         </Link>
         <button
           className={`${styles.wishlistBtn} ${wishlisted ? styles.wishlisted : ''}`}
-          onClick={() => toggleItem(product)}
-          aria-label="Add to wishlist"
+          onClick={() => toggleItem(product)} aria-label="Save to wishlist"
         >
-          <Heart size={16} fill={wishlisted ? 'currentColor' : 'none'} />
+          <Heart size={15} strokeWidth={1.5} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
-        {product.isNew && <span className={styles.badge}>NEW</span>}
-        {product.originalPrice && <span className={`${styles.badge} ${styles.saleBadge}`}>SALE</span>}
-      </div>
-
-      <div className={styles.info}>
-        <Link to={`/product/${product.id}`} className={styles.name}>
-          {product.name}
-        </Link>
-        <div className={styles.priceRow}>
-          <span className={styles.price}>£{product.price.toFixed(2)}</span>
-          {product.originalPrice && (
-            <span className={styles.originalPrice}>£{product.originalPrice.toFixed(2)}</span>
-          )}
+        <div className={styles.badges}>
+          {product.isNew && <span className={styles.badge}>New</span>}
+          {product.isBestseller && !product.isNew && <span className={`${styles.badge} ${styles.bestsellerBadge}`}>Bestseller</span>}
+          {discount && <span className={`${styles.badge} ${styles.saleBadge}`}>-{discount}%</span>}
         </div>
-        <div className={styles.colors}>
-          {product.colors.slice(0, 4).map(color => (
-            <span key={color} className={styles.colorDot} title={color} />
+        <div className={styles.fabricTag}>{product.fabric}</div>
+      </div>
+      <div className={styles.info}>
+        <Link to={`/product/${product.id}`} className={styles.name}>{product.name}</Link>
+        <div className={styles.priceRow}>
+          <span className={styles.price}>{displayPrice}</span>
+          {displayOriginal && <span className={styles.originalPrice}>{displayOriginal}</span>}
+        </div>
+        <div className={styles.colorRow}>
+          {product.colors.slice(0, 3).map(c => (
+            <span key={c} className={styles.colorChip} title={c} />
           ))}
-          {product.colors.length > 4 && (
-            <span className={styles.moreColors}>+{product.colors.length - 4}</span>
-          )}
+          {product.colors.length > 3 && <span className={styles.moreColors}>+{product.colors.length - 3}</span>}
         </div>
       </div>
     </div>

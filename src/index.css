@@ -1,17 +1,25 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --black: #0a0a0a;
-  --white: #fafafa;
-  --grey-100: #f5f5f5;
-  --grey-200: #e8e8e8;
-  --grey-300: #d0d0d0;
-  --grey-500: #888888;
-  --grey-700: #444444;
-  --accent: #c8a96e;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --nav-height: 60px;
+  --black: #1a1410;
+  --white: #fdf9f4;
+  --cream: #f5ede0;
+  --cream-dark: #ede0cc;
+  --sand: #c9a96e;
+  --sand-light: #e8d5b4;
+  --sand-dark: #9e7c4a;
+  --sage: #7a8c6e;
+  --terracotta: #c4714a;
+  --grey-100: #f8f3ee;
+  --grey-200: #ede5d8;
+  --grey-300: #d4c5b0;
+  --grey-500: #9a8878;
+  --grey-700: #5a4a3a;
+  --font-display: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Jost', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-accent: 'Cormorant Garamond', Georgia, serif;
+  --nav-height: 64px;
+  --topbar-height: 36px;
   --transition: 0.3s ease;
 }
 
@@ -31,19 +39,16 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 img { max-width: 100%; display: block; }
 ul, ol { list-style: none; }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--grey-100); }
-::-webkit-scrollbar-thumb { background: var(--grey-300); }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--sand-light); }
 
-/* Utilities */
-.container { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+.container { max-width: 1440px; margin: 0 auto; padding: 0 32px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
-/* Animations */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes shimmer { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-.fade-in { animation: fadeIn 0.5s ease forwards; }
+.fade-in { animation: fadeIn 0.6s ease forwards; }
