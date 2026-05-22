@@ -1,0 +1,204 @@
+.main { padding-top: calc(var(--nav-height) + 36px); min-height: 100vh; }
+
+.empty, .success {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 60vh; gap: 16px; text-align: center;
+}
+
+.successIcon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: #2d7a2d; color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+
+.success h1 { font-family: var(--font-display); font-size: 28px; font-weight: 400; letter-spacing: 0.08em; }
+.success p { font-size: 14px; color: var(--grey-700); max-width: 400px; }
+.orderNum { font-size: 16px; font-weight: 600; letter-spacing: 0.1em; margin-top: 8px; }
+
+.shopBtn {
+  background: var(--black); color: var(--white);
+  padding: 14px 32px; font-size: 12px; letter-spacing: 0.12em;
+  margin-top: 8px; display: inline-block;
+}
+
+.layout { display: grid; grid-template-columns: 1fr 420px; min-height: 100vh; }
+
+.formSide {
+  padding: 40px 60px;
+  border-right: 1px solid var(--grey-200);
+  max-width: 600px;
+  width: 100%;
+  justify-self: end;
+}
+
+.logoLink {
+  font-family: var(--font-display);
+  font-size: 28px; letter-spacing: 0.15em; color: var(--black);
+  display: block; margin-bottom: 32px;
+}
+
+.steps {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 40px;
+}
+
+.step {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; letter-spacing: 0.1em; color: var(--grey-300);
+}
+
+.step::after {
+  content: '›';
+  margin: 0 12px;
+  color: var(--grey-300);
+}
+
+.step:last-child::after { display: none; }
+
+.active { color: var(--black) !important; font-weight: 600; }
+.done { color: #2d7a2d !important; }
+
+.stepNum {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+}
+
+.form { display: flex; flex-direction: column; }
+.formStep { display: flex; flex-direction: column; gap: 16px; animation: fadeIn 0.3s ease; }
+
+.formStep h2 {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 400; letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field label { font-size: 11px; letter-spacing: 0.08em; font-weight: 500; color: var(--grey-700); }
+
+.field input, .field select {
+  border: 1px solid var(--grey-200);
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color var(--transition);
+  background: var(--white);
+}
+
+.field input:focus { border-color: var(--black); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.nextBtn, .placeOrderBtn {
+  background: var(--black); color: var(--white);
+  padding: 16px; font-size: 12px; letter-spacing: 0.12em;
+  font-family: var(--font-body); font-weight: 500;
+  margin-top: 8px; transition: background var(--transition);
+  flex: 1;
+}
+
+.nextBtn:hover, .placeOrderBtn:hover { background: var(--grey-700); }
+
+.backBtn {
+  font-size: 12px; color: var(--grey-500); letter-spacing: 0.05em;
+  font-family: var(--font-body);
+  padding: 16px 0;
+}
+
+.backBtn:hover { color: var(--black); }
+
+.btnRow { display: flex; gap: 16px; align-items: center; margin-top: 8px; }
+
+/* Shipping */
+.shippingOptions { display: flex; flex-direction: column; gap: 12px; }
+
+.shippingOption {
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid var(--grey-200);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.shippingOption:hover { border-color: var(--grey-300); }
+
+.shippingOption input { accent-color: var(--black); width: 16px; height: 16px; }
+
+.shippingOption p:first-child { font-size: 13px; font-weight: 500; }
+
+.shippingPrice { font-size: 12px; color: var(--grey-500); margin-top: 2px; }
+
+/* Payment */
+.paymentMethods { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+
+.paymentMethod {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--grey-200);
+  padding: 12px 16px; font-size: 12px;
+  font-family: var(--font-body); color: var(--grey-700);
+  transition: all var(--transition);
+}
+
+.paymentMethod:hover { border-color: var(--black); color: var(--black); }
+.activeMethod { border-color: var(--black); color: var(--black); background: var(--grey-100); }
+
+.applePay { text-align: center; padding: 20px 0; }
+
+.applePayBtn {
+  background: var(--black); color: var(--white);
+  padding: 14px 40px; font-size: 16px;
+  font-family: var(--font-display); border-radius: 8px;
+}
+
+/* Summary side */
+.summarySide {
+  padding: 40px;
+  background: var(--grey-100);
+  position: sticky;
+  top: 0; height: 100vh;
+  overflow-y: auto;
+}
+
+.summarySide h3 {
+  font-size: 13px; letter-spacing: 0.12em; font-weight: 600;
+  margin-bottom: 24px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--grey-200);
+}
+
+.summaryItems { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+
+.summaryItem { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; }
+
+.summaryImageWrapper { position: relative; }
+
+.summaryImageWrapper img { width: 60px; height: 80px; object-fit: cover; }
+
+.summaryQty {
+  position: absolute; top: -8px; right: -8px;
+  background: var(--grey-500); color: var(--white);
+  border-radius: 50%; width: 20px; height: 20px;
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+}
+
+.summaryItemName { font-size: 12px; font-weight: 500; line-height: 1.4; }
+.summaryItemMeta { font-size: 11px; color: var(--grey-500); margin-top: 3px; }
+.summaryItemPrice { font-size: 13px; font-weight: 500; }
+
+.summaryTotals {
+  border-top: 1px solid var(--grey-300);
+  padding-top: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.summaryRow { display: flex; justify-content: space-between; font-size: 13px; }
+.summaryTotal { font-size: 15px; font-weight: 600; padding-top: 12px; border-top: 1px solid var(--grey-300); }
+
+@media (max-width: 1024px) {
+  .layout { grid-template-columns: 1fr; }
+  .summarySide { position: static; height: auto; }
+  .formSide { padding: 32px 24px; max-width: 100%; justify-self: auto; }
+}

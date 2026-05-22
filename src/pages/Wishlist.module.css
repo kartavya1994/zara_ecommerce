@@ -1,0 +1,19 @@
+.main { padding-top: calc(var(--nav-height) + 36px + 40px); padding-bottom: 80px; min-height: 80vh; }
+
+.header { margin-bottom: 40px; }
+.header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 400; letter-spacing: 0.08em; margin-bottom: 4px; }
+.header p { font-size: 12px; color: var(--grey-500); letter-spacing: 0.05em; }
+
+.empty {
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 50vh; justify-content: center; gap: 16px;
+  color: var(--grey-500); text-align: center;
+}
+.empty h2 { font-size: 18px; letter-spacing: 0.1em; color: var(--black); font-family: var(--font-display); font-weight: 400; }
+.empty p { font-size: 14px; max-width: 300px; }
+.shopBtn { background: var(--black); color: var(--white); padding: 14px 32px; font-size: 12px; letter-spacing: 0.12em; margin-top: 8px; }
+
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 16px; }
+
+@media (max-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }

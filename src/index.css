@@ -1,0 +1,49 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #0a0a0a;
+  --white: #fafafa;
+  --grey-100: #f5f5f5;
+  --grey-200: #e8e8e8;
+  --grey-300: #d0d0d0;
+  --grey-500: #888888;
+  --grey-700: #444444;
+  --accent: #c8a96e;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --nav-height: 60px;
+  --transition: 0.3s ease;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--white);
+  color: var(--black);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+img { max-width: 100%; display: block; }
+ul, ol { list-style: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--grey-100); }
+::-webkit-scrollbar-thumb { background: var(--grey-300); }
+
+/* Utilities */
+.container { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.fade-in { animation: fadeIn 0.5s ease forwards; }
