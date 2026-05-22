@@ -1,16 +1,41 @@
-# React + Vite
+# ZARR — Zara-like Ecommerce Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-featured ecommerce website inspired by Zara, built with React + Vite.
 
-Currently, two official plugins are available:
+## 🛍️ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Full product catalog** — Woman, Man, Kids, Home, Beauty, Sale categories
+- **Product detail pages** — Image gallery, size/color selector, wishlist, add to bag
+- **Shopping cart** — Slide-out sidebar, quantity controls, persistent (localStorage)
+- **Wishlist** — Save favourite items, persistent across sessions
+- **Checkout flow** — 3-step: Address → Shipping → Payment
+- **Search** — Search across all products
+- **Filters & Sort** — Filter by subcategory, size; sort by price/newest
+- **Hero slider** — Auto-playing full-screen hero carousel
+- **Responsive** — Mobile-first, works on all devices
+- **Account page** — Sign in / Register UI
 
-## React Compiler
+## 🚀 Live Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**[View Live Site](https://kartavya1994.github.io/zara_ecommerce/)**
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React 18 + Vite
+- React Router DOM
+- Zustand (state management)
+- CSS Modules
+- Lucide React (icons)
+
+## 💻 Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+## 🏗️ Build
+
+```bash
+npm run build
+```
