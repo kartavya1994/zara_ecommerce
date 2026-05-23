@@ -1,30 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, Heart, Menu, X, User } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, X, MoreHorizontal } from 'lucide-react';
 import { useCartStore, useWishlistStore, useUIStore } from '../../store/useStore';
-import { categories } from '../../data/products';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileOpen, setMobileOpen] = useState(false);
   const cartCount = useCartStore(s => s.items.reduce((sum, i) => sum + i.quantity, 0));
   const wishlistCount = useWishlistStore(s => s.items.length);
-  const { searchOpen, mobileMenuOpen, toggleSearch, closeSearch, toggleMobileMenu, closeMobileMenu } = useUIStore();
   const { openCart } = useCartStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const fn = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', fn);
+    return () => window.removeEventListener('scroll', fn);
   }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      closeSearch();
       setSearchQuery('');
     }
   };
@@ -32,80 +30,93 @@ export default function Navbar() {
   return (
     <>
       <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
-        <div className={styles.topBar}>
-          <span>Complimentary shipping on orders over ₹3,000 &nbsp;·&nbsp; Worldwide delivery available</span>
-        </div>
         <nav className={styles.nav}>
-          <button className={styles.iconBtn} onClick={toggleMobileMenu} aria-label="Menu">
-            {mobileMenuOpen ? <X size={18} strokeWidth={1.5} /> : <Menu size={18} strokeWidth={1.5} />}
-          </button>
-
-          <div className={styles.navLinks}>
-            {categories.map(cat => (
-              <Link
-                key={cat.id}
-                to={cat.id === 'themes' ? '/collections' : `/category/${cat.slug}`}
-                className={`${styles.navLink} ${cat.id === 'sale' ? styles.saleLink : ''}`}
-              >
-                {cat.label}
-              </Link>
-            ))}
+          {/* LEFT: Search */}
+          <div className={styles.navLeft}>
+            <form onSubmit={handleSearch} className={styles.searchForm}>
+              <input
+                type="text"
+                placeholder="Search the Entire Collection Here"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+              <button type="submit" className={styles.searchBtn}>
+                <Search size={16} strokeWidth={2} />
+              </button>
+            </form>
           </div>
 
+          {/* CENTER: Logo */}
           <Link to="/" className={styles.logo}>
-            <span className={styles.logoMain}>Regent & Row</span>
-            <span className={styles.logoSub}>Pure Linen</span>
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <path d="M24 4C24 4 10 14 10 26C10 33 16 38 24 38C32 38 38 33 38 26C38 14 24 4 24 4Z" fill="var(--navy)" opacity="0.15"/>
+              <path d="M18 8C18 8 8 18 10 28C11 34 17 40 24 40" stroke="var(--navy)" strokeWidth="3" strokeLinecap="round" fill="none"/>
+              <path d="M24 40C31 40 37 34 38 28C40 18 30 8 30 8" stroke="var(--navy)" strokeWidth="3" strokeLinecap="round" fill="none"/>
+              <path d="M16 20C16 20 20 28 24 30C28 28 32 20 32 20" stroke="var(--navy)" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            </svg>
           </Link>
 
-          <div className={styles.actions}>
-            <button className={styles.iconBtn} onClick={toggleSearch} aria-label="Search">
-              <Search size={17} strokeWidth={1.5} />
-            </button>
-            <Link to="/wishlist" className={styles.iconBtn} aria-label="Wishlist">
-              <Heart size={17} strokeWidth={1.5} />
-              {wishlistCount > 0 && <span className={styles.badge}>{wishlistCount}</span>}
-            </Link>
+          {/* RIGHT: Icons */}
+          <div className={styles.navRight}>
             <Link to="/account" className={styles.iconBtn} aria-label="Account">
-              <User size={17} strokeWidth={1.5} />
+              <User size={20} strokeWidth={1.8} />
             </Link>
-            <button className={styles.iconBtn} onClick={openCart} aria-label="Cart">
-              <ShoppingBag size={17} strokeWidth={1.5} />
+            <button className={`${styles.iconBtn} ${styles.wishlistBtn}`} onClick={() => navigate('/wishlist')} aria-label="Wishlist">
+              <Heart size={20} strokeWidth={1.8} />
+              {wishlistCount > 0 && <span className={styles.badge}>{wishlistCount}</span>}
+            </button>
+            <button className={`${styles.iconBtn} ${styles.cartBtn}`} onClick={openCart} aria-label="Cart">
+              <ShoppingCart size={20} strokeWidth={1.8} />
               {cartCount > 0 && <span className={styles.badge}>{cartCount}</span>}
+            </button>
+            <button className={styles.iconBtn} onClick={() => setMobileOpen(!mobileOpen)} aria-label="More">
+              <MoreHorizontal size={20} strokeWidth={1.8} />
             </button>
           </div>
         </nav>
+
+        {/* Mobile/dropdown menu */}
+        {mobileOpen && (
+          <div className={styles.dropdown}>
+            <div className={styles.dropdownInner}>
+              {[
+                ['/', 'Home'],
+                ['/category/women', 'Women'],
+                ['/category/men', 'Men'],
+                ['/category/resort', 'Resort Edit'],
+                ['/category/classics', 'The Classics'],
+                ['/collections', 'Collections'],
+                ['/try-on', 'Virtual Try-On'],
+                ['/category/sale', 'Sale'],
+              ].map(([path, label]) => (
+                <Link key={path} to={path} className={styles.dropdownLink} onClick={() => setMobileOpen(false)}>
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
-      {searchOpen && (
-        <div className={styles.searchOverlay} onClick={closeSearch}>
-          <div className={styles.searchBox} onClick={e => e.stopPropagation()}>
-            <form onSubmit={handleSearch}>
-              <Search size={16} strokeWidth={1.5} />
-              <input autoFocus type="text" placeholder="Search linen pieces..."
-                value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-              <button type="button" onClick={closeSearch}><X size={16} /></button>
-            </form>
-          </div>
+      {/* Top nav category bar */}
+      <div className={styles.catBar}>
+        <div className={styles.catBarInner}>
+          {[
+            ['/category/women', 'Women'],
+            ['/category/men', 'Men'],
+            ['/category/resort', 'Resort Edit'],
+            ['/category/classics', 'The Classics'],
+            ['/collections', 'Collections'],
+            ['/try-on', '✦ Virtual Try-On'],
+            ['/category/sale', 'Sale'],
+          ].map(([path, label]) => (
+            <Link key={path} to={path} className={`${styles.catLink} ${label === 'Sale' ? styles.saleLink : ''}`}>
+              {label}
+            </Link>
+          ))}
         </div>
-      )}
-
-      {mobileMenuOpen && (
-        <div className={styles.mobileMenu}>
-          <div className={styles.mobileMenuInner}>
-            {categories.map(cat => (
-              <Link key={cat.id}
-                to={cat.id === 'themes' ? '/collections' : `/category/${cat.slug}`}
-                className={`${styles.mobileNavLink} ${cat.id === 'sale' ? styles.saleLink : ''}`}
-                onClick={closeMobileMenu}>
-                {cat.label}
-              </Link>
-            ))}
-            <hr className={styles.mobileDivider} />
-            <Link to="/account" className={styles.mobileNavLink} onClick={closeMobileMenu}>My Account</Link>
-            <Link to="/wishlist" className={styles.mobileNavLink} onClick={closeMobileMenu}>Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ''}</Link>
-          </div>
-        </div>
-      )}
+      </div>
     </>
   );
 }

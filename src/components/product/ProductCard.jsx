@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
-import { useWishlistStore } from '../../store/useStore';
+import { Heart, Plus } from 'lucide-react';
+import { useWishlistStore, useCartStore } from '../../store/useStore';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const { toggleItem, isWishlisted } = useWishlistStore();
+  const { addItem } = useCartStore();
   const wishlisted = isWishlisted(product.id);
-
-  const displayPrice = `${product.currency}${product.price.toLocaleString('en-IN')}`;
-  const displayOriginal = product.originalPrice ? `${product.currency}${product.originalPrice.toLocaleString('en-IN')}` : null;
-  const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : null;
+  const discount = product.originalPrice
+    ? Math.round((1 - product.price / product.originalPrice) * 100) : null;
 
   return (
     <div className={styles.card} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
@@ -24,30 +23,39 @@ export default function ProductCard({ product }) {
         </Link>
         <button
           className={`${styles.wishlistBtn} ${wishlisted ? styles.wishlisted : ''}`}
-          onClick={() => toggleItem(product)} aria-label="Save to wishlist"
+          onClick={() => toggleItem(product)}
         >
-          <Heart size={15} strokeWidth={1.5} fill={wishlisted ? 'currentColor' : 'none'} />
+          <Heart size={14} strokeWidth={1.8} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
-        <div className={styles.badges}>
-          {product.isNew && <span className={styles.badge}>New</span>}
-          {product.isBestseller && !product.isNew && <span className={`${styles.badge} ${styles.bestsellerBadge}`}>Bestseller</span>}
-          {discount && <span className={`${styles.badge} ${styles.saleBadge}`}>-{discount}%</span>}
-        </div>
-        <div className={styles.fabricTag}>{product.fabric}</div>
+        {product.isNew && <span className={styles.badge}>New</span>}
+        {discount && <span className={`${styles.badge} ${styles.saleBadge}`}>-{discount}%</span>}
       </div>
+
       <div className={styles.info}>
         <Link to={`/product/${product.id}`} className={styles.name}>{product.name}</Link>
         <div className={styles.priceRow}>
-          <span className={styles.price}>{displayPrice}</span>
-          {displayOriginal && <span className={styles.originalPrice}>{displayOriginal}</span>}
+          <span className={styles.price}>
+            ₹{product.price.toLocaleString('en-IN')}.00
+          </span>
+          {product.originalPrice && (
+            <span className={styles.originalPrice}>₹{product.originalPrice.toLocaleString('en-IN')}.00</span>
+          )}
         </div>
-        <div className={styles.colorRow}>
-          {product.colors.slice(0, 3).map(c => (
-            <span key={c} className={styles.colorChip} title={c} />
+        <div className={styles.sizeRow}>
+          {product.sizes.slice(0, 4).map(s => (
+            <span key={s} className={styles.sizeChip}>{s}</span>
           ))}
-          {product.colors.length > 3 && <span className={styles.moreColors}>+{product.colors.length - 3}</span>}
+          {product.sizes.length > 4 && <span className={styles.sizeMore}>...</span>}
         </div>
       </div>
+
+      <button
+        className={styles.addBtn}
+        onClick={() => addItem(product, product.sizes[0], product.colors[0], 1)}
+        aria-label="Add to cart"
+      >
+        <Plus size={15} strokeWidth={2.5} />
+      </button>
     </div>
   );
 }
