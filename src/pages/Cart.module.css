@@ -5,7 +5,7 @@
   min-height: 60vh; gap: 16px; color: var(--grey-500); text-align: center;
 }
 
-.empty h2 { font-size: 20px; letter-spacing: 0.1em; color: var(--black); font-family: var(--font-display); font-weight: 400; }
+.empty h2 { font-size: 20px; letter-spacing: 0.1em; color: var(--black); font-family: var(--font-heading); font-weight: 400; }
 .empty p { font-size: 14px; }
 
 .shopBtn {
@@ -15,7 +15,7 @@
 }
 
 .title {
-  font-family: var(--font-display);
+  font-family: var(--font-heading);
   font-size: 28px; font-weight: 400; letter-spacing: 0.08em;
   margin-bottom: 40px;
 }

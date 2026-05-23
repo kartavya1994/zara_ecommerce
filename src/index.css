@@ -1,50 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --navy: #1B4B6B;
-  --navy-dark: #0f2d42;
-  --navy-light: #2a6690;
-  --teal: #1e6b8c;
-  --teal-band: #2a7da6;
-  --white: #ffffff;
-  --off-white: #f8f6f2;
-  --cream: #f2ede6;
-  --beige: #e8ddd0;
-  --black: #111111;
-  --text-dark: #1a1a2e;
-  --text-mid: #4a4a5a;
-  --text-light: #8a8a9a;
-  --grey-100: #f5f5f7;
-  --grey-200: #e8e8ec;
-  --grey-300: #d0d0d8;
-  --card-radius: 14px;
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* ── Brand Colors ── */
+  --deep-blue:   #003249;
+  --azure:       #256c96;
+  --azure-light: #3a85b5;
+  --azure-dark:  #1a5070;
+  --black:       #000000;
+  --white:       #ffffff;
+  --off-white:   #f8f9fb;
+  --cream:       #f2f6f9;
+  --light-blue:  #e8f2f8;
+
+  /* ── Greys ── */
+  --grey-100: #f4f6f8;
+  --grey-200: #e0e6ec;
+  --grey-300: #c0ccda;
+  --grey-500: #7a8fa0;
+  --grey-700: #3a4f60;
+
+  /* ── Spacing & Shape ── */
+  --card-radius: 12px;
   --nav-height: 64px;
+  --catbar-height: 40px;
   --transition: 0.25s ease;
+
+  /* ── Fonts ── */
+  --font-heading: 'Century Gothic', 'Avant Garde Gothic', 'Gill Sans', Futura, sans-serif;
+  --font-body:    'Poppins', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Trajan Pro', 'Cinzel', 'Times New Roman', Georgia, serif;
 }
 
 html { scroll-behavior: smooth; }
+
 body {
   font-family: var(--font-body);
   background: var(--white);
   color: var(--black);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
+
 a { text-decoration: none; color: inherit; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 img { max-width: 100%; display: block; }
 ul, ol { list-style: none; }
 
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--grey-100); }
-::-webkit-scrollbar-thumb { background: var(--navy-light); }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--azure); border-radius: 2px; }
 
-.container { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+.container { max-width: 1320px; margin: 0 auto; padding: 0 28px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes scaleIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* ── Heading utility — Century Gothic Bold ── */
+.heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ── Dramatic text — Explorer-feel (Cinzel/Trajan) ── */
+.dramatic {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+
+@keyframes fadeIn      { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeInLeft  { from { opacity:0; transform:translateX(-20px);} to { opacity:1; transform:translateX(0); } }
+@keyframes scaleIn     { from { transform:scale(0.96); opacity:0; }      to { transform:scale(1); opacity:1; } }
+@keyframes spin        { to { transform:rotate(360deg); } }
+@keyframes bounce      { 0%,80%,100%{transform:scale(0.7);opacity:.5;} 40%{transform:scale(1);opacity:1;} }
+@keyframes shimmer     { 0%,100%{opacity:.4;} 50%{opacity:1;} }

@@ -1,9 +1,9 @@
 .main { padding-top: calc(var(--nav-height) + var(--topbar-height)); padding-bottom: 80px; }
 
 .pageHeader { text-align: center; padding: 60px 0 50px; }
-.eyebrow { display: block; font-size: 10px; letter-spacing: 0.28em; color: var(--sand-dark); text-transform: uppercase; margin-bottom: 14px; }
-.pageHeader h1 { font-family: var(--font-display); font-size: clamp(32px, 5vw, 52px); font-weight: 400; margin-bottom: 14px; }
-.pageHeader p { font-size: 15px; color: var(--grey-500); font-style: italic; font-family: var(--font-accent); }
+.eyebrow { display: block; font-size: 10px; letter-spacing: 0.28em; color: var(--azure); text-transform: uppercase; margin-bottom: 14px; }
+.pageHeader h1 { font-family: var(--font-heading); font-size: clamp(32px, 5vw, 52px); font-weight: 400; margin-bottom: 14px; }
+.pageHeader p { font-size: 15px; color: var(--grey-500); font-style: italic; font-family: var(--font-display); }
 
 .collectionsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
 .colCard { display: block; overflow: hidden; border: 1px solid var(--grey-200); transition: border-color var(--transition); }
@@ -13,10 +13,10 @@
 .colCard:hover .colImgWrap img { transform: scale(1.04); }
 .colOverlay { position: absolute; inset: 0; }
 .colInfo { padding: 28px 28px 32px; }
-.colTagline { display: block; font-size: 10px; letter-spacing: 0.2em; color: var(--sand-dark); text-transform: uppercase; margin-bottom: 10px; font-style: italic; }
-.colInfo h2 { font-family: var(--font-display); font-size: 26px; font-weight: 400; margin-bottom: 10px; }
+.colTagline { display: block; font-size: 10px; letter-spacing: 0.2em; color: var(--azure); text-transform: uppercase; margin-bottom: 10px; font-style: italic; }
+.colInfo h2 { font-family: var(--font-heading); font-size: 26px; font-weight: 400; margin-bottom: 10px; }
 .colInfo p { font-size: 13px; color: var(--grey-700); line-height: 1.7; margin-bottom: 20px; }
-.colExplore { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.12em; color: var(--sand-dark); border-bottom: 1px solid var(--sand); padding-bottom: 2px; }
+.colExplore { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.12em; color: var(--azure); border-bottom: 1px solid var(--sand); padding-bottom: 2px; }
 
 /* Single collection */
 .collectionHero { position: relative; height: 55vh; min-height: 380px; overflow: hidden; }
@@ -24,8 +24,8 @@
 .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to right, rgba(26,20,16,0.6) 0%, transparent 70%); }
 .heroContent { position: absolute; bottom: 60px; left: 80px; color: var(--white); max-width: 500px; }
 .heroEyebrow { display: block; font-size: 10px; letter-spacing: 0.28em; color: var(--sand-light); margin-bottom: 12px; text-transform: uppercase; }
-.heroContent h1 { font-family: var(--font-display); font-size: clamp(36px, 6vw, 64px); font-weight: 400; margin-bottom: 14px; }
-.heroContent p { font-size: 14px; line-height: 1.7; color: rgba(253,249,244,0.8); max-width: 400px; font-family: var(--font-accent); font-style: italic; }
+.heroContent h1 { font-family: var(--font-heading); font-size: clamp(36px, 6vw, 64px); font-weight: 400; margin-bottom: 14px; }
+.heroContent p { font-size: 14px; line-height: 1.7; color: rgba(253,249,244,0.8); max-width: 400px; font-family: var(--font-display); font-style: italic; }
 .collectionGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px 16px; padding: 60px 0; }
 .backRow { border-top: 1px solid var(--grey-200); padding-top: 28px; }
 .backLink { font-size: 12px; color: var(--grey-500); letter-spacing: 0.08em; transition: color var(--transition); }

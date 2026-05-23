@@ -1,10 +1,10 @@
 .main { padding-top: calc(var(--nav-height) + 42px); min-height: 80vh; }
 .pageHeader { padding: 40px 0 20px; border-bottom: 1px solid var(--grey-200); margin-bottom: 24px; }
-.title { font-family: var(--font-display); font-size: 36px; font-weight: 700; color: var(--navy); letter-spacing: 0.02em; margin-bottom: 6px; }
+.title { font-family: var(--font-display); font-size: 36px; font-weight: 700; color: var(--deep-blue); letter-spacing: 0.02em; margin-bottom: 6px; }
 .subtitle { font-size: 12px; color: var(--text-light); letter-spacing: 0.06em; font-style: italic; }
 .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--grey-200); margin-bottom: 24px; }
 .filterToggle { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text-dark); padding: 8px 16px; border: 1.5px solid var(--grey-200); border-radius: 50px; transition: all var(--transition); }
-.filterToggle:hover { border-color: var(--navy); color: var(--navy); }
+.filterToggle:hover { border-color: var(--deep-blue); color: var(--deep-blue); }
 .sortRow { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-light); }
 .sortSelect { border: none; outline: none; font-size: 12px; font-family: var(--font-body); cursor: pointer; background: transparent; color: var(--text-dark); font-weight: 600; }
 .layout { display: flex; gap: 40px; align-items: flex-start; }
@@ -15,12 +15,12 @@
 .filterGroup { margin-bottom: 24px; border-top: 1px solid var(--grey-200); padding-top: 18px; }
 .filterGroup h4 { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; margin-bottom: 12px; text-transform: uppercase; color: var(--text-dark); }
 .filterLabel { display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; padding: 4px 0; color: var(--text-mid); transition: color var(--transition); }
-.filterLabel:hover { color: var(--navy); }
-.filterLabel input { width: 14px; height: 14px; accent-color: var(--navy); cursor: pointer; }
+.filterLabel:hover { color: var(--deep-blue); }
+.filterLabel input { width: 14px; height: 14px; accent-color: var(--deep-blue); cursor: pointer; }
 .sizeGrid { display: flex; flex-wrap: wrap; gap: 6px; }
 .sizeBtn { min-width: 42px; height: 32px; border: 1.5px solid var(--grey-200); font-size: 11px; font-weight: 600; color: var(--text-mid); padding: 0 8px; border-radius: 6px; transition: all var(--transition); }
-.sizeBtn:hover { border-color: var(--navy); color: var(--navy); }
-.sizeBtn.active { background: var(--navy); color: white; border-color: var(--navy); }
+.sizeBtn:hover { border-color: var(--deep-blue); color: var(--deep-blue); }
+.sizeBtn.active { background: var(--deep-blue); color: white; border-color: var(--deep-blue); }
 .grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 16px; align-content: start; }
 .withFilters { grid-template-columns: repeat(3, 1fr); }
 .empty { grid-column: 1/-1; text-align: center; padding: 80px; display: flex; flex-direction: column; align-items: center; gap: 16px; color: var(--text-light); }

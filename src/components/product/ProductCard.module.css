@@ -1,57 +1,21 @@
-.card {
-  border: 1.5px solid var(--grey-200); border-radius: var(--card-radius);
-  overflow: hidden; background: var(--white); position: relative;
-  display: flex; flex-direction: column;
-  transition: box-shadow var(--transition);
-}
-.card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.09); }
-
+.card { border: 1.5px solid var(--grey-200); border-radius: var(--card-radius); overflow: hidden; background: white; position: relative; display: flex; flex-direction: column; transition: box-shadow var(--transition), border-color var(--transition); }
+.card:hover { box-shadow: 0 8px 28px rgba(0,50,73,0.12); border-color: var(--grey-300); }
 .imageWrapper { position: relative; aspect-ratio: 3/4; overflow: hidden; background: var(--cream); }
 .image { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: transform 0.6s ease; }
 .card:hover .image { transform: scale(1.04); }
-
-.wishlistBtn {
-  position: absolute; top: 10px; right: 10px;
-  width: 32px; height: 32px; background: white; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-mid); box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  transition: all var(--transition);
-}
-.wishlistBtn:hover { color: var(--navy); }
+.wishlistBtn { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--grey-500); box-shadow: 0 2px 8px rgba(0,50,73,0.15); transition: all var(--transition); }
+.wishlistBtn:hover { color: var(--deep-blue); }
 .wishlisted { color: #e74c3c !important; }
-
-.badge {
-  position: absolute; top: 10px; left: 10px;
-  background: var(--navy); color: white;
-  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
-  padding: 3px 8px; border-radius: 4px;
-}
+.badge { position: absolute; top: 10px; left: 10px; background: var(--deep-blue); color: white; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 4px; }
 .saleBadge { background: #e74c3c; top: 36px; }
-
 .info { padding: 12px 14px 44px; flex: 1; }
-.name {
-  display: block; font-size: 13px; font-weight: 500; color: var(--text-dark);
-  margin-bottom: 4px; line-height: 1.35;
-  transition: color var(--transition);
-}
-.name:hover { color: var(--navy); }
+.name { display: block; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--deep-blue); margin-bottom: 4px; line-height: 1.35; transition: color var(--transition); }
+.name:hover { color: var(--azure); }
 .priceRow { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.price { font-size: 13px; font-weight: 600; color: var(--text-dark); font-style: italic; }
-.originalPrice { font-size: 11px; color: var(--text-light); text-decoration: line-through; }
-
+.price { font-size: 13px; font-weight: 700; color: var(--azure); }
+.originalPrice { font-size: 11px; color: var(--grey-500); text-decoration: line-through; }
 .sizeRow { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.sizeChip {
-  width: 26px; height: 26px; border-radius: 50%;
-  border: 1.5px solid var(--grey-200);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 600; color: var(--text-mid);
-}
-.sizeMore { font-size: 11px; color: var(--text-light); }
-
-.addBtn {
-  position: absolute; bottom: 12px; right: 12px;
-  width: 34px; height: 34px; background: var(--navy); color: white;
-  border-radius: 9px; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(27,75,107,0.3); transition: background var(--transition);
-}
-.addBtn:hover { background: var(--navy-dark); }
+.sizeChip { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--grey-200); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: var(--grey-700); }
+.sizeMore { font-size: 11px; color: var(--grey-500); }
+.addBtn { position: absolute; bottom: 12px; right: 12px; width: 34px; height: 34px; background: var(--deep-blue); color: white; border-radius: 9px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,50,73,0.3); transition: background var(--transition); }
+.addBtn:hover { background: var(--azure); }

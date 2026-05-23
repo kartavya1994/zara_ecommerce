@@ -1,8 +1,93 @@
 import { useState, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Upload, Camera, X, ArrowRight, Sparkles, RefreshCw } from 'lucide-react';
+import { Upload, X, Sparkles, RefreshCw, ArrowRight, Camera } from 'lucide-react';
 import { getProductById, products } from '../data/products';
 import styles from './TryOn.module.css';
+
+// ── Calls Anthropic via an iframe/blob trick to bypass CORS ──────────────────
+async function callClaudeVision(imageBase64, imageType, productName, fabric, colors, description) {
+  return new Promise((resolve, reject) => {
+    const html = `<!DOCTYPE html>
+<html>
+<body>
+<script>
+(async () => {
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 800,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: "${imageType}", data: "${imageBase64}" }},
+            { type: "text", text: \`You are a personal fashion stylist for Regent & Row, a luxury linen brand.
+
+A customer has shared their photo. They are considering buying: "${productName}"
+Fabric: ${fabric}
+Available colours: ${colors}
+About this piece: ${description}
+
+Write a warm, personalised 150-word style reading in second person (you/your). Cover:
+1. How this garment's silhouette and cut will suit their body
+2. Which colour from the options will complement them best and why
+3. How the linen fabric will feel on their skin in Indian/tropical heat
+4. One styling suggestion
+
+Be warm, specific, and aspirational — like a luxury boutique stylist. End with a confident one-liner about their style.\` }
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content && data.content[0] && data.content[0].text;
+    if (!text) throw new Error(data.error?.message || "No response");
+    parent.postMessage({ type: "CLAUDE_RESULT", text }, "*");
+  } catch(e) {
+    parent.postMessage({ type: "CLAUDE_ERROR", message: e.message }, "*");
+  }
+})();
+<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Request timed out. Please try again.'));
+    }, 30000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      window.removeEventListener('message', handler);
+      document.body.removeChild(iframe);
+      URL.revokeObjectURL(url);
+    }
+
+    function handler(event) {
+      if (event.data?.type === 'CLAUDE_RESULT') {
+        cleanup();
+        resolve(event.data.text);
+      } else if (event.data?.type === 'CLAUDE_ERROR') {
+        cleanup();
+        reject(new Error(event.data.message));
+      }
+    }
+    window.addEventListener('message', handler);
+  });
+}
 
 export default function TryOn() {
   const [searchParams] = useSearchParams();
@@ -12,6 +97,7 @@ export default function TryOn() {
   const [selectedProduct, setSelectedProduct] = useState(defaultProduct);
   const [userImage, setUserImage] = useState(null);
   const [userImageBase64, setUserImageBase64] = useState(null);
+  const [userImageType, setUserImageType] = useState('image/jpeg');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +108,7 @@ export default function TryOn() {
 
   const handleFile = useCallback((file) => {
     if (!file || !file.type.startsWith('image/')) {
-      setError('Please upload a valid image file (JPG, PNG, WEBP).');
+      setError('Please upload a valid image (JPG, PNG, WEBP).');
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
@@ -30,15 +116,15 @@ export default function TryOn() {
       return;
     }
     setError(null);
-    const url = URL.createObjectURL(file);
-    setUserImage(url);
+    setUserImageType(file.type || 'image/jpeg');
+    setUserImage(URL.createObjectURL(file));
     const reader = new FileReader();
-    reader.onload = (e) => setUserImageBase64(e.target.result.split(',')[1]);
+    reader.onload = e => setUserImageBase64(e.target.result.split(',')[1]);
     reader.readAsDataURL(file);
     setResult(null);
   }, []);
 
-  const handleDrop = (e) => {
+  const handleDrop = e => {
     e.preventDefault(); setDragOver(false);
     handleFile(e.dataTransfer.files[0]);
   };
@@ -47,49 +133,17 @@ export default function TryOn() {
     if (!userImageBase64 || !selectedProduct) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const prompt = `You are a fashion AI assistant for Regent & Row, a luxury linen clothing brand.
-
-The user has uploaded a photo of themselves. You need to create a detailed, vivid, written "virtual try-on" description that paints a picture of how they would look wearing the "${selectedProduct.name}" in colour "${selectedProduct.colors[0]}".
-
-The garment details:
-- Name: ${selectedProduct.name}
-- Fabric: ${selectedProduct.fabric}
-- Colours available: ${selectedProduct.colors.join(', ')}
-- Description: ${selectedProduct.description}
-
-Based on the person's photo, write a warm, personal, luxury fashion stylist's description (150–200 words) of:
-1. How the garment would fit and drape on their body
-2. Which colour from the options would suit them best and why
-3. How the linen fabric would feel and look on them specifically
-4. A styling suggestion — what to pair it with
-
-Write in second person ("you / your"). Be specific, warm, and aspirational — like a personal stylist at a luxury boutique. End with a one-sentence affirmation about their style.`;
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: 'image/jpeg', data: userImageBase64 }
-              },
-              { type: 'text', text: prompt }
-            ]
-          }]
-        })
-      });
-
-      if (!response.ok) throw new Error('API error');
-      const data = await response.json();
-      const text = data.content.map(b => b.text || '').join('');
+      const text = await callClaudeVision(
+        userImageBase64,
+        userImageType,
+        selectedProduct.name,
+        selectedProduct.fabric,
+        selectedProduct.colors.join(', '),
+        selectedProduct.description
+      );
       setResult(text);
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError(`Could not generate style reading: ${err.message}. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -103,37 +157,33 @@ Write in second person ("you / your"). Be specific, warm, and aspirational — l
   return (
     <main className={styles.main}>
       <div className="container">
-        {/* Header */}
         <div className={styles.header}>
           <span className={styles.eyebrow}>New Experience</span>
-          <h1>Virtual Try-On</h1>
-          <p>Upload your photo. Our AI stylist will tell you exactly how any Regent & Row piece will look and feel on you — colour, drape, fit and all.</p>
+          <h1 className={styles.title}>Virtual Try-On</h1>
+          <p className={styles.subtitle}>Upload your photo. Our AI stylist tells you exactly how any piece will look on you — fit, colour and all.</p>
         </div>
 
         <div className={styles.layout}>
-          {/* LEFT: Upload + Product Select */}
+          {/* LEFT PANEL */}
           <div className={styles.leftPanel}>
-
-            {/* Step 1 – Photo */}
             <div className={styles.step}>
               <div className={styles.stepNum}>01</div>
               <div className={styles.stepContent}>
                 <h3>Your Photo</h3>
-                <p>A clear, well-lit photo works best. Full-body or upper body.</p>
+                <p>A clear, well-lit photo works best. Full or upper body.</p>
                 {!userImage ? (
                   <div
                     className={`${styles.dropzone} ${dragOver ? styles.dragOver : ''}`}
-                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <input ref={fileInputRef} type="file" accept="image/*" className={styles.fileInput}
-                      onChange={e => handleFile(e.target.files[0])} />
+                    <input ref={fileInputRef} type="file" accept="image/*"
+                      className={styles.fileInput} onChange={e => handleFile(e.target.files[0])} />
                     <Upload size={28} strokeWidth={1.5} />
                     <p>Drop your photo here</p>
-                    <span>or click to browse</span>
-                    <span className={styles.dropzoneNote}>JPG, PNG, WEBP · Max 8MB</span>
+                    <span>or click to browse · Max 8MB</span>
                   </div>
                 ) : (
                   <div className={styles.uploadedImage}>
@@ -144,65 +194,52 @@ Write in second person ("you / your"). Be specific, warm, and aspirational — l
               </div>
             </div>
 
-            {/* Step 2 – Product */}
             <div className={styles.step}>
               <div className={styles.stepNum}>02</div>
               <div className={styles.stepContent}>
                 <h3>Choose a Piece</h3>
-                <p>Select the linen garment you'd like to try on.</p>
+                <p>Select the linen garment you want to try on.</p>
                 <div className={styles.productPicker}>
                   {tryOnProducts.map(p => (
-                    <button
-                      key={p.id}
+                    <button key={p.id}
                       className={`${styles.pickerItem} ${selectedProduct?.id === p.id ? styles.pickerActive : ''}`}
-                      onClick={() => { setSelectedProduct(p); setResult(null); }}
-                    >
+                      onClick={() => { setSelectedProduct(p); setResult(null); }}>
                       <img src={p.image} alt={p.name} />
                       <div className={styles.pickerInfo}>
                         <span className={styles.pickerName}>{p.name}</span>
-                        <span className={styles.pickerPrice}>{p.currency}{p.price.toLocaleString('en-IN')}</span>
+                        <span className={styles.pickerPrice}>₹{p.price.toLocaleString('en-IN')}</span>
                       </div>
-                      {selectedProduct?.id === p.id && <div className={styles.pickerCheck}>✓</div>}
+                      {selectedProduct?.id === p.id && <span className={styles.pickerCheck}>✓</span>}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Generate Button */}
             <button
               className={`${styles.generateBtn} ${(!userImage || !selectedProduct || loading) ? styles.disabled : ''}`}
               onClick={handleGenerate}
               disabled={!userImage || !selectedProduct || loading}
             >
-              {loading ? (
-                <><RefreshCw size={16} className={styles.spinning} /> Analysing your style...</>
-              ) : (
-                <><Sparkles size={16} /> See It On You</>
-              )}
+              {loading
+                ? <><RefreshCw size={16} className={styles.spinning} /> Analysing your style...</>
+                : <><Sparkles size={16} /> See It On You</>}
             </button>
-
             {error && <p className={styles.errorMsg}>{error}</p>}
           </div>
 
-          {/* RIGHT: Result */}
+          {/* RIGHT PANEL */}
           <div className={styles.rightPanel}>
             {!result && !loading && (
-              <div className={styles.resultPlaceholder}>
-                <div className={styles.placeholderIcon}>✦</div>
+              <div className={styles.placeholder}>
+                <Camera size={48} strokeWidth={1} className={styles.placeholderIcon} />
                 <h3>Your Style Reading</h3>
-                <p>Upload your photo and select a garment to receive a personalised style description from our AI stylist.</p>
+                <p>Upload your photo and select a garment to get a personalised AI style description.</p>
                 <div className={styles.howItWorks}>
                   <h4>How it works</h4>
-                  {[
-                    'Upload a clear photo of yourself',
-                    'Choose a linen piece from our collection',
-                    'Our AI analyses your photo and the garment',
-                    'Receive a personalised fit and style description',
-                  ].map((s, i) => (
+                  {['Upload a clear photo of yourself', 'Choose a linen piece from our collection', 'Our AI reads your photo + the garment', 'Get a personal fit, colour & style guide'].map((s, i) => (
                     <div key={i} className={styles.howStep}>
-                      <span>{String(i + 1).padStart(2, '0')}</span>
-                      <p>{s}</p>
+                      <span>{String(i+1).padStart(2,'0')}</span><p>{s}</p>
                     </div>
                   ))}
                 </div>
@@ -211,22 +248,18 @@ Write in second person ("you / your"). Be specific, warm, and aspirational — l
 
             {loading && (
               <div className={styles.loadingState}>
-                <div className={styles.loadingIcon}>✦</div>
+                <div className={styles.loadingIcon}><Sparkles size={40} strokeWidth={1} /></div>
                 <h3>Reading your style...</h3>
-                <p>Our AI stylist is analysing your photo and the selected piece. This takes just a moment.</p>
-                <div className={styles.loadingDots}>
-                  <span /><span /><span />
-                </div>
+                <p>Analysing your photo and the selected garment.</p>
+                <div className={styles.loadingDots}><span /><span /><span /></div>
               </div>
             )}
 
             {result && selectedProduct && (
               <div className={styles.result}>
                 <div className={styles.resultHeader}>
-                  <Sparkles size={16} className={styles.sparkle} />
-                  <span>Your Style Reading</span>
+                  <Sparkles size={14} /><span>Your Personal Style Reading</span>
                 </div>
-
                 <div className={styles.resultProduct}>
                   <img src={selectedProduct.image} alt={selectedProduct.name} />
                   <div>
@@ -234,30 +267,20 @@ Write in second person ("you / your"). Be specific, warm, and aspirational — l
                     <p className={styles.resultProductFabric}>{selectedProduct.fabric}</p>
                   </div>
                 </div>
-
                 <div className={styles.resultText}>
-                  {result.split('\n').filter(Boolean).map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
+                  {result.split('\n').filter(Boolean).map((para, i) => <p key={i}>{para}</p>)}
                 </div>
-
                 <div className={styles.resultActions}>
                   <Link to={`/product/${selectedProduct.id}`} className={styles.shopNowBtn}>
                     Shop This Piece <ArrowRight size={14} />
                   </Link>
-                  <button className={styles.tryAnotherBtn} onClick={() => setResult(null)}>
-                    Try Another Piece
-                  </button>
+                  <button className={styles.tryAnotherBtn} onClick={() => setResult(null)}>Try Another</button>
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        {/* Disclaimer */}
-        <p className={styles.disclaimer}>
-          Your photo is processed securely and never stored. The AI stylist provides descriptive guidance — actual fit may vary. For size queries, consult our Size Guide.
-        </p>
+        <p className={styles.disclaimer}>Your photo is processed securely and never stored. AI descriptions are for guidance only.</p>
       </div>
     </main>
   );
