@@ -1,43 +1,36 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Plus, ShoppingCart } from 'lucide-react';
-import { products } from '../data/products';
+import { Heart, Plus, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { products, heroSlides, themeCollections } from '../data/products';
 import { useCartStore, useWishlistStore } from '../store/useStore';
 import styles from './Home.module.css';
 
-// Quick-add product card matching the design
-function StyleCard({ product }) {
+// ── Quick-add card matching PDF style exactly ───────────────────────────────
+function ProductCard({ product }) {
   const { toggleItem, isWishlisted } = useWishlistStore();
   const { addItem } = useCartStore();
-  const wishlisted = isWishlisted(product.id);
   return (
-    <div className={styles.styleCard}>
-      <div className={styles.styleCardImg}>
+    <div className={styles.pCard}>
+      <div className={styles.pCardImg}>
         <Link to={`/product/${product.id}`}>
           <img src={product.image} alt={product.name} loading="lazy" />
         </Link>
-        <button
-          className={`${styles.cardHeart} ${wishlisted ? styles.hearted : ''}`}
-          onClick={() => toggleItem(product)}
-        >
-          <Heart size={15} fill={wishlisted ? 'currentColor' : 'none'} strokeWidth={1.8} />
+        <button className={`${styles.pHeart} ${isWishlisted(product.id) ? styles.hearted : ''}`}
+          onClick={() => toggleItem(product)}>
+          <Heart size={14} fill={isWishlisted(product.id) ? 'currentColor' : 'none'} strokeWidth={1.8} />
         </button>
+        {product.isNew && <span className={styles.pBadge}>NEW</span>}
       </div>
-      <div className={styles.styleCardBody}>
-        <p className={styles.styleCardName}>{product.name}</p>
-        <p className={styles.styleCardPrice}>₹{product.price.toLocaleString('en-IN')}.00</p>
-        <div className={styles.sizeRow}>
-          {product.sizes.slice(0, 4).map(s => (
-            <span key={s} className={styles.sizeChip}>{s}</span>
-          ))}
-          {product.sizes.length > 4 && <span className={styles.sizeMore}>...</span>}
+      <div className={styles.pCardBody}>
+        <p className={styles.pName}>{product.name}</p>
+        <p className={styles.pPrice}>₹{product.price.toLocaleString('en-IN')}.00</p>
+        <div className={styles.pSizes}>
+          {product.sizes.slice(0, 4).map(s => <span key={s} className={styles.pSize}>{s}</span>)}
+          {product.sizes.length > 4 && <span className={styles.pSizeMore}>...</span>}
         </div>
       </div>
-      <button
-        className={styles.addBtn}
-        onClick={() => addItem(product, product.sizes[0], product.colors[0], 1)}
-        aria-label="Add to cart"
-      >
+      <button className={styles.pAdd}
+        onClick={() => addItem(product, product.sizes[0], product.colors[0], 1)}>
         <Plus size={16} strokeWidth={2.5} />
       </button>
     </div>
@@ -45,180 +38,232 @@ function StyleCard({ product }) {
 }
 
 export default function Home() {
-  const featuredProducts = products.filter(p => p.category !== 'sale').slice(0, 3);
-  const coordSets = products.filter(p => p.subcategory === 'sets').slice(0, 3);
-  const studioImages = [
-    'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&q=85',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=85',
-    'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=600&q=85',
-    'https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=600&q=85',
-    'https://images.unsplash.com/photo-1602810316693-3667c854239a?w=600&q=85',
-    'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=600&q=85',
-  ];
+  const [slide, setSlide] = useState(0);
+  const timerRef = useRef(null);
+
+  const startTimer = () => {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setSlide(s => (s + 1) % heroSlides.length), 5500);
+  };
+  useEffect(() => { startTimer(); return () => clearInterval(timerRef.current); }, []);
+  const goTo = i => { setSlide(i); startTimer(); };
+
+  const newProducts   = products.filter(p => p.isNew && p.category !== 'sale').slice(0, 3);
+  const menProducts   = products.filter(p => p.category === 'men').slice(0, 3);
+  const womenProducts = products.filter(p => p.category === 'women').slice(0, 3);
+  const kidsProducts  = products.filter(p => p.category === 'kids').slice(0, 3);
+  const saleProducts  = products.filter(p => p.category === 'sale').slice(0, 3);
 
   return (
     <main className={styles.main}>
 
-      {/* ── SECTION 1: HERO IMAGE GRID + BARE LINEN ──────── */}
-      <section className={styles.heroSection}>
+      {/* ── 1. HERO IMAGE GRID (PDF style: 4 tall editorial cols) ── */}
+      <section className={styles.heroTop}>
         <div className={styles.heroGrid}>
-          <div className={styles.heroGridImg}><img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=500&q=85" alt="Linen style 1" /></div>
-          <div className={styles.heroGridImg}><img src="https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=500&q=85" alt="Linen style 2" /></div>
-          <div className={styles.heroGridImg}><img src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=500&q=85" alt="Linen style 3" /></div>
-          <div className={styles.heroGridImg}><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&q=85" alt="Linen style 4" /></div>
+          {heroSlides.concat(heroSlides[0]).slice(0, 4).map((s, i) => (
+            <div key={i} className={styles.heroCol}>
+              <img src={s.image} alt={s.label} />
+            </div>
+          ))}
         </div>
-        <div className={styles.bareLinenRow}>
-          <div className={styles.bareLinenLeft}>
+        <div className={styles.heroCaption}>
+          <div className={styles.heroCaptionLeft}>
             <h1 className={styles.bareLinenTitle}>Bare Linen</h1>
-            <Link to="/category/men" className={styles.shopNowBtn}>SHOP NOW</Link>
+            <Link to="/category/men" className={styles.shopNowCta}>SHOP NOW</Link>
           </div>
-          <div className={styles.bareLinenRight}>
+          <div className={styles.heroCaptionRight}>
             <span className={styles.byText}>by</span>
-            <span className={styles.brandName}>Regent & Row</span>
+            <span className={styles.brandBig}>Regent &amp; Row</span>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 2: TRUST BAR ─────────────────────────── */}
+      {/* ── 2. TRUST BAR ── */}
       <section className={styles.trustBar}>
-        <div className={styles.trustItem}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="none"/><path d="M4 20h18l4-8H8L6 8H2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="10" cy="25" r="2" fill="white"/><circle cx="20" cy="25" r="2" fill="white"/></svg>
-          <div><p>Free Shipping</p><span>Available</span></div>
-        </div>
-        <div className={styles.trustItem}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M6 6h20v16H6z" stroke="white" strokeWidth="2" strokeLinejoin="round"/><path d="M10 22v4M22 22v4M6 10h20" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-          <div><p>Free Returns</p><span>Within 7 Days</span></div>
-        </div>
-        <div className={styles.trustItem}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 3l11 4v9c0 6-4.5 10.5-11 12C9.5 26.5 5 22 5 16V7l11-4z" stroke="white" strokeWidth="2" strokeLinejoin="round"/><path d="M11 16l3 3 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <div><p>100% Secure</p><span>Online shopping</span></div>
-        </div>
-        <div className={styles.trustItem}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M8 16h16M16 8v16" stroke="white" strokeWidth="2" strokeLinecap="round"/><rect x="4" y="4" width="24" height="24" rx="4" stroke="white" strokeWidth="2"/></svg>
-          <div><p>Cash on delivery</p><span>Available</span></div>
-        </div>
+        {[
+          { icon: '🚚', label: 'Free Shipping', sub: 'Available' },
+          { icon: '↩', label: 'Free Returns', sub: 'Within 7 Days' },
+          { icon: '🔒', label: '100% Secure', sub: 'Online Shopping' },
+          { icon: '💵', label: 'Cash on Delivery', sub: 'Available' },
+        ].map(t => (
+          <div key={t.label} className={styles.trustItem}>
+            <span className={styles.trustIcon}>{t.icon}</span>
+            <div><p>{t.label}</p><span>{t.sub}</span></div>
+          </div>
+        ))}
       </section>
 
-      {/* ── SECTION 3: FASHION WEEK HERO ─────────────────── */}
-      <section className={styles.fashionWeekSection}>
-        <div className={styles.fashionWeekLeft}>
-          <p className={styles.fwEditionLabel}>NEW SUMMER EDITION</p>
+      {/* ── 3. FASHION WEEK HERO ── */}
+      <section className={styles.fwSection}>
+        <div className={styles.fwLeft}>
+          <p className={styles.fwLabel}>NEW SUMMER EDITION</p>
           <h2 className={styles.fwYear}>2026</h2>
-          <Link to="/category/men" className={styles.shopLinenBtn}>SHOP LINEN</Link>
+          <Link to="/category/men" className={styles.fwBtn}>SHOP LINEN</Link>
         </div>
-        <div className={styles.fashionWeekCenter}>
-          <img
-            src="https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=900&q=90"
-            alt="Fashion Week 2026"
-            className={styles.fwImage}
-          />
+        <div className={styles.fwCenter}>
+          <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=900&q=90" alt="Fashion Week 2026" />
         </div>
-        <div className={styles.fashionWeekRight}>
-          <p className={styles.fwPremium}>PREMIUM<br />LINEN</p>
-          <div className={styles.fwBrand}>
-            <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-              <path d="M18 8C18 8 8 18 10 28C11 34 17 40 24 40" stroke="var(--navy)" strokeWidth="3" strokeLinecap="round" fill="none"/>
-              <path d="M24 40C31 40 37 34 38 28C40 18 30 8 30 8" stroke="var(--navy)" strokeWidth="3" strokeLinecap="round" fill="none"/>
-            </svg>
-            <p className={styles.fwBrandName}>REGENT & ROW<br /><span>FASHION WEEK</span></p>
+        <div className={styles.fwRight}>
+          <div className={styles.fwBadge}>PREMIUM<br />LINEN</div>
+          <div className={styles.fwBrandBadge}>
+            <span>REGENT &amp; ROW</span>
+            <span>FASHION WEEK</span>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 4: SHOP BY STYLE ─────────────────────── */}
+      {/* ── 4. SHOP BY STYLE ── */}
       <section className={styles.shopByStyle}>
         <div className="container">
-          <h2 className={styles.shopByTitle}>
-            SHOP BY <span className={styles.shopByItalic}>Style</span>
+          <h2 className={styles.shopByHeading}>
+            SHOP BY <em className={styles.shopByEm}>Style</em>
           </h2>
-          <div className={styles.styleCardsGrid}>
-            {featuredProducts.map(p => <StyleCard key={p.id} product={p} />)}
-          </div>
+          <div className={styles.cardGrid3}>{newProducts.map(p => <ProductCard key={p.id} product={p} />)}</div>
         </div>
       </section>
 
-      {/* ── SECTION 5: CASUAL + FORMAL EDITORIAL BANNERS ─── */}
-      <section className={styles.editorialBanners}>
-        <div className={styles.editorialDuo}>
-          <div className={styles.editorialCard}>
-            <img src="https://images.unsplash.com/photo-1602810316693-3667c854239a?w=700&q=85" alt="Casual" />
-            <div className={styles.editorialOverlay}>
-              <div className={styles.editorialTopBtn}>
-                <Link to="/category/men" className={styles.viewShopBtn}>VIEW & SHOP</Link>
-              </div>
-              <div className={styles.editorialBottom}>
-                <p className={styles.editorialCategory}>CASUAL</p>
-                <p className={styles.editorialSub}>Premium Lightwear</p>
+      {/* ── 5. CASUAL + FORMAL EDITORIAL BANNERS ── */}
+      <section className={styles.editorialSection}>
+        <div className={styles.editorialPair}>
+          <div className={styles.editorialPanel}>
+            <img src="https://images.unsplash.com/photo-1602810316693-3667c854239a?w=800&q=85" alt="Casual" />
+            <div className={styles.editorialLayer}>
+              <Link to="/category/men" className={styles.viewShopBtn}>VIEW &amp; SHOP</Link>
+              <div className={styles.editorialLabel}>
+                <p className={styles.editorialBig}>CASUAL</p>
+                <p className={styles.editorialSmall}>Premium Lightwear</p>
               </div>
             </div>
           </div>
-          <div className={styles.editorialCard}>
-            <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=700&q=85" alt="Formal" />
-            <div className={styles.editorialOverlay}>
-              <div className={styles.editorialTopBtn} style={{justifyContent:'flex-end'}}>
-                <Link to="/category/classics" className={styles.viewShopBtn}>VIEW & SHOP</Link>
-              </div>
-              <div className={styles.editorialBottom}>
-                <p className={styles.editorialCategory}>FORMAL</p>
-                <p className={styles.editorialSub}>Luxe Bottoms</p>
+          <div className={styles.editorialPanel}>
+            <img src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&q=85" alt="Formal" />
+            <div className={styles.editorialLayer}>
+              <Link to="/category/classics" className={styles.viewShopBtn}>VIEW &amp; SHOP</Link>
+              <div className={styles.editorialLabel}>
+                <p className={styles.editorialBig}>FORMAL</p>
+                <p className={styles.editorialSmall}>Luxe Bottoms</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 6: REGULAR CASUALS / CO-ORD SETS ─────── */}
+      {/* ── 6. REGULAR CASUALS / CO-ORD SETS ── */}
       <section className={styles.coordSection}>
         <div className="container">
-          <div className={styles.coordInner}>
-            <div className={styles.coordLeft}>
-              <div className={styles.coordHeadingWrap}>
-                <h2 className={styles.coordHeading}>REGULAR<br />CASUALS</h2>
-                <span className={styles.coordBadge}>CO-ORD SETS</span>
-              </div>
+          <div className={styles.coordLayout}>
+            <div className={styles.coordTextBlock}>
+              <h2 className={styles.coordBig}>REGULAR<br />CASUALS</h2>
+              <span className={styles.coordTag}>CO-ORD SETS</span>
             </div>
             <div className={styles.coordCards}>
-              {(coordSets.length > 0 ? coordSets : featuredProducts).map(p => (
-                <StyleCard key={p.id} product={p} />
-              ))}
+              {menProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
-            <div className={styles.coordModelImg}>
-              <img src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&q=85" alt="Co-ord model" />
+            <div className={styles.coordModel}>
+              <img src="https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=500&q=85" alt="Co-ord model" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 7: REGENT & ROW STUDIO ───────────────── */}
-      <section className={styles.studio}>
+      {/* ── 7. WOMEN'S SECTION ── */}
+      <section className={styles.genderSection}>
         <div className="container">
-          <div className={styles.studioHeader}>
-            <h2 className={styles.studioTitle}>
-              <span className={styles.studioSmall}>Regent & Row</span>
-              <span className={styles.studioLarge}>STUDIO</span>
-            </h2>
+          <div className={styles.genderHeader}>
+            <div>
+              <span className={styles.sectionEye}>Her Collection</span>
+              <h2 className={styles.sectionTitle}>Women's Linen</h2>
+            </div>
+            <Link to="/category/women" className={styles.seeAll}>See All <ArrowRight size={13} /></Link>
           </div>
-          <div className={styles.studioGrid}>
-            <div className={`${styles.studioCell} ${styles.studioCellTall}`}>
-              <img src={studioImages[0]} alt="Studio 1" />
+          <div className={styles.cardGrid3}>{womenProducts.map(p => <ProductCard key={p.id} product={p} />)}</div>
+        </div>
+      </section>
+
+      {/* ── 8. KIDS SECTION ── */}
+      <section className={styles.kidsSection}>
+        <div className="container">
+          <div className={styles.kidsLayout}>
+            <div className={styles.kidsText}>
+              <span className={styles.sectionEye}>Mini Collection</span>
+              <h2 className={styles.kidsBig}>Mini<br />Linen.</h2>
+              <p>Soft, breathable linen for little ones. Easy to wash, made to last.</p>
+              <Link to="/category/kids" className={styles.kidsBtn}>Shop Kids <ArrowRight size={14} /></Link>
             </div>
-            <div className={styles.studioSubGrid}>
-              <div className={`${styles.studioCell} ${styles.studioCellBlue}`}>
-                <img src={studioImages[1]} alt="Studio 2" />
-              </div>
-              <div className={styles.studioCell}>
-                <img src={studioImages[2]} alt="Studio 3" />
-              </div>
-            </div>
-            <div className={`${styles.studioCell} ${styles.studioCellTall}`}>
-              <img src={studioImages[3]} alt="Studio 4" />
-            </div>
-            <div className={styles.studioCell}>
-              <img src={studioImages[4]} alt="Studio 5" />
+            <div className={styles.kidsCards}>
+              {kidsProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── 9. THEME COLLECTIONS ── */}
+      <section className={styles.themesSection}>
+        <div className="container">
+          <div className={styles.genderHeader}>
+            <div>
+              <span className={styles.sectionEye}>Curated by Mood</span>
+              <h2 className={styles.sectionTitle}>Theme Collections</h2>
+            </div>
+            <Link to="/collections" className={styles.seeAll}>See All <ArrowRight size={13} /></Link>
+          </div>
+          <div className={styles.themeGrid}>
+            {themeCollections.map(col => (
+              <Link key={col.id} to={`/collections/${col.slug}`} className={styles.themeCard}>
+                <div className={styles.themeImg}>
+                  <img src={col.image} alt={col.name} />
+                  <div className={styles.themeOverlay} />
+                </div>
+                <div className={styles.themeInfo}>
+                  <p className={styles.themeTagline}>{col.tagline}</p>
+                  <h3>{col.name}</h3>
+                  <span>Explore →</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 10. STUDIO SECTION ── */}
+      <section className={styles.studio}>
+        <div className="container">
+          <div className={styles.studioHead}>
+            <span className={styles.studioSmall}>Regent &amp; Row</span>
+            <span className={styles.studioLarge}>STUDIO</span>
+          </div>
+          <div className={styles.studioGrid}>
+            {[
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=85',
+              'https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=600&q=85',
+              'https://images.unsplash.com/photo-1603217192634-61068e4d4bf9?w=600&q=85',
+              'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=85',
+              'https://images.unsplash.com/photo-1621072156002-e2fccdc0b176?w=600&q=85',
+              'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?w=600&q=85',
+            ].map((src, i) => (
+              <div key={i} className={`${styles.studioCell} ${i === 0 || i === 3 ? styles.studioCellTall : ''}`}>
+                <img src={src} alt={`Studio ${i+1}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 11. SALE STRIP ── */}
+      {saleProducts.length > 0 && (
+        <section className={styles.saleSection}>
+          <div className="container">
+            <div className={styles.genderHeader}>
+              <div>
+                <span className={styles.sectionEye}>Limited Time</span>
+                <h2 className={`${styles.sectionTitle} ${styles.saleTitle}`}>Sale — Up to 40% off</h2>
+              </div>
+              <Link to="/category/sale" className={styles.seeAll}>See All <ArrowRight size={13} /></Link>
+            </div>
+            <div className={styles.cardGrid3}>{saleProducts.map(p => <ProductCard key={p.id} product={p} />)}</div>
+          </div>
+        </section>
+      )}
 
     </main>
   );

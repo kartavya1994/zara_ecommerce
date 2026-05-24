@@ -1,99 +1,65 @@
 import { useState, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Upload, X, Sparkles, RefreshCw, ArrowRight, Camera } from 'lucide-react';
+import { Upload, X, Sparkles, RefreshCw, ArrowRight, Camera, Key } from 'lucide-react';
 import { getProductById, products } from '../data/products';
 import styles from './TryOn.module.css';
 
-// ── Calls Anthropic via an iframe/blob trick to bypass CORS ──────────────────
-async function callClaudeVision(imageBase64, imageType, productName, fabric, colors, description) {
-  return new Promise((resolve, reject) => {
-    const html = `<!DOCTYPE html>
-<html>
-<body>
-<script>
-(async () => {
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 800,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: "${imageType}", data: "${imageBase64}" }},
-            { type: "text", text: \`You are a personal fashion stylist for Regent & Row, a luxury linen brand.
+async function callClaudeVision(apiKey, imageBase64, imageType, product) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 800,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: imageType, data: imageBase64 }
+          },
+          {
+            type: 'text',
+            text: `You are a personal fashion stylist at Regent & Row, a luxury Indian linen brand.
 
-A customer has shared their photo. They are considering buying: "${productName}"
-Fabric: ${fabric}
-Available colours: ${colors}
-About this piece: ${description}
+A customer has shared their photo. They are considering: "${product.name}"
+Fabric: ${product.fabric}
+Available colours: ${product.colors.join(', ')}
+About this piece: ${product.description}
 
-Write a warm, personalised 150-word style reading in second person (you/your). Cover:
-1. How this garment's silhouette and cut will suit their body
-2. Which colour from the options will complement them best and why
-3. How the linen fabric will feel on their skin in Indian/tropical heat
-4. One styling suggestion
+Write a warm, personalised 150-word style reading in second person. Cover:
+1. How this garment's silhouette will suit their body type
+2. Which colour will complement them best and why
+3. How the linen will feel in Indian/tropical heat
+4. One precise styling suggestion
 
-Be warm, specific, and aspirational — like a luxury boutique stylist. End with a confident one-liner about their style.\` }
-          ]
-        }]
-      })
-    });
-    const data = await res.json();
-    const text = data.content && data.content[0] && data.content[0].text;
-    if (!text) throw new Error(data.error?.message || "No response");
-    parent.postMessage({ type: "CLAUDE_RESULT", text }, "*");
-  } catch(e) {
-    parent.postMessage({ type: "CLAUDE_ERROR", message: e.message }, "*");
-  }
-})();
-<\/script>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const iframe = document.createElement('iframe');
-    iframe.src = url;
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error('Request timed out. Please try again.'));
-    }, 30000);
-
-    function cleanup() {
-      clearTimeout(timeout);
-      window.removeEventListener('message', handler);
-      document.body.removeChild(iframe);
-      URL.revokeObjectURL(url);
-    }
-
-    function handler(event) {
-      if (event.data?.type === 'CLAUDE_RESULT') {
-        cleanup();
-        resolve(event.data.text);
-      } else if (event.data?.type === 'CLAUDE_ERROR') {
-        cleanup();
-        reject(new Error(event.data.message));
-      }
-    }
-    window.addEventListener('message', handler);
+Be warm, specific, and aspirational — like a luxury boutique stylist.`
+          }
+        ]
+      }]
+    })
   });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
 }
 
 export default function TryOn() {
   const [searchParams] = useSearchParams();
-  const defaultProductId = searchParams.get('product');
-  const defaultProduct = defaultProductId ? getProductById(defaultProductId) : null;
+  const defaultProduct = searchParams.get('product') ? getProductById(searchParams.get('product')) : null;
 
+  const [apiKey, setApiKey] = useState('');
+  const [apiKeySet, setApiKeySet] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(defaultProduct);
   const [userImage, setUserImage] = useState(null);
   const [userImageBase64, setUserImageBase64] = useState(null);
@@ -102,19 +68,15 @@ export default function TryOn() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [gender, setGender] = useState('all');
   const fileInputRef = useRef(null);
 
-  const tryOnProducts = products.filter(p => p.category !== 'sale').slice(0, 12);
+  const tryOnProducts = products.filter(p => p.category !== 'sale' &&
+    (gender === 'all' || p.category === gender));
 
   const handleFile = useCallback((file) => {
-    if (!file || !file.type.startsWith('image/')) {
-      setError('Please upload a valid image (JPG, PNG, WEBP).');
-      return;
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      setError('Image must be under 8MB.');
-      return;
-    }
+    if (!file?.type.startsWith('image/')) { setError('Please upload a valid image (JPG, PNG, WEBP).'); return; }
+    if (file.size > 8 * 1024 * 1024) { setError('Image must be under 8MB.'); return; }
     setError(null);
     setUserImageType(file.type || 'image/jpeg');
     setUserImage(URL.createObjectURL(file));
@@ -124,81 +86,115 @@ export default function TryOn() {
     setResult(null);
   }, []);
 
-  const handleDrop = e => {
-    e.preventDefault(); setDragOver(false);
-    handleFile(e.dataTransfer.files[0]);
-  };
-
   const handleGenerate = async () => {
-    if (!userImageBase64 || !selectedProduct) return;
+    if (!userImageBase64 || !selectedProduct || !apiKey) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const text = await callClaudeVision(
-        userImageBase64,
-        userImageType,
-        selectedProduct.name,
-        selectedProduct.fabric,
-        selectedProduct.colors.join(', '),
-        selectedProduct.description
-      );
+      const text = await callClaudeVision(apiKey, userImageBase64, userImageType, selectedProduct);
       setResult(text);
     } catch (err) {
-      setError(`Could not generate style reading: ${err.message}. Please try again.`);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const reset = () => {
-    setUserImage(null); setUserImageBase64(null);
-    setResult(null); setError(null);
-  };
-
   return (
     <main className={styles.main}>
-      <div className="container">
-        <div className={styles.header}>
-          <span className={styles.eyebrow}>New Experience</span>
-          <h1 className={styles.title}>Virtual Try-On</h1>
-          <p className={styles.subtitle}>Upload your photo. Our AI stylist tells you exactly how any piece will look on you — fit, colour and all.</p>
+      {/* Hero */}
+      <div className={styles.hero}>
+        <div className={styles.heroText}>
+          <span className={styles.eyebrow}>AI-Powered Experience</span>
+          <h1>Virtual Try-On</h1>
+          <p>Upload your photo. Our AI stylist will tell you exactly how any piece looks on you — fit, colour, drape and all.</p>
         </div>
+      </div>
 
+      <div className="container">
         <div className={styles.layout}>
-          {/* LEFT PANEL */}
+
+          {/* ── LEFT: Steps ── */}
           <div className={styles.leftPanel}>
-            <div className={styles.step}>
-              <div className={styles.stepNum}>01</div>
+
+            {/* Step 0: API Key */}
+            <div className={`${styles.step} ${apiKeySet ? styles.stepDone : ''}`}>
+              <div className={styles.stepNum}>{apiKeySet ? '✓' : '00'}</div>
               <div className={styles.stepContent}>
-                <h3>Your Photo</h3>
-                <p>A clear, well-lit photo works best. Full or upper body.</p>
-                {!userImage ? (
-                  <div
-                    className={`${styles.dropzone} ${dragOver ? styles.dragOver : ''}`}
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <input ref={fileInputRef} type="file" accept="image/*"
-                      className={styles.fileInput} onChange={e => handleFile(e.target.files[0])} />
-                    <Upload size={28} strokeWidth={1.5} />
-                    <p>Drop your photo here</p>
-                    <span>or click to browse · Max 8MB</span>
+                <h3>Your Anthropic API Key</h3>
+                <p>Required to power the AI. Your key is never stored — used only in your browser session.</p>
+                {!apiKeySet ? (
+                  <div className={styles.apiKeyForm}>
+                    <div className={styles.apiKeyInput}>
+                      <Key size={14} />
+                      <input
+                        type="password"
+                        placeholder="sk-ant-api03-..."
+                        value={apiKey}
+                        onChange={e => setApiKey(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      className={styles.apiKeyBtn}
+                      onClick={() => { if (apiKey.startsWith('sk-ant')) setApiKeySet(true); else setError('Please enter a valid Anthropic API key (starts with sk-ant)'); }}
+                    >
+                      Confirm Key
+                    </button>
+                    <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener noreferrer" className={styles.getKeyLink}>
+                      Get a free API key →
+                    </a>
                   </div>
                 ) : (
-                  <div className={styles.uploadedImage}>
-                    <img src={userImage} alt="Your photo" />
-                    <button className={styles.removeImage} onClick={reset}><X size={16} /></button>
+                  <div className={styles.keyConfirmed}>
+                    <span>✓ API key confirmed</span>
+                    <button onClick={() => { setApiKeySet(false); setApiKey(''); }} className={styles.changeKey}>Change</button>
                   </div>
                 )}
               </div>
             </div>
 
+            {/* Step 1: Photo */}
+            <div className={styles.step}>
+              <div className={styles.stepNum}>01</div>
+              <div className={styles.stepContent}>
+                <h3>Your Photo</h3>
+                <p>Well-lit, full or upper body. Front-facing works best.</p>
+                {!userImage ? (
+                  <div
+                    className={`${styles.dropzone} ${dragOver ? styles.dragOver : ''}`}
+                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input ref={fileInputRef} type="file" accept="image/*"
+                      className={styles.fileInput} onChange={e => handleFile(e.target.files[0])} />
+                    <Upload size={26} strokeWidth={1.5} />
+                    <p>Drop photo here or click to browse</p>
+                    <span>JPG · PNG · WEBP · Max 8MB</span>
+                  </div>
+                ) : (
+                  <div className={styles.uploadedWrap}>
+                    <img src={userImage} alt="Your photo" className={styles.uploadedImg} />
+                    <button className={styles.removeImg} onClick={() => { setUserImage(null); setUserImageBase64(null); setResult(null); }}>
+                      <X size={14} /> Change photo
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Step 2: Product */}
             <div className={styles.step}>
               <div className={styles.stepNum}>02</div>
               <div className={styles.stepContent}>
                 <h3>Choose a Piece</h3>
                 <p>Select the linen garment you want to try on.</p>
+                <div className={styles.genderTabs}>
+                  {[['all','All'],['women','Women'],['men','Men'],['resort','Resort']].map(([v,l]) => (
+                    <button key={v} className={`${styles.genderTab} ${gender===v ? styles.activeTab : ''}`}
+                      onClick={() => setGender(v)}>{l}</button>
+                  ))}
+                </div>
                 <div className={styles.productPicker}>
                   {tryOnProducts.map(p => (
                     <button key={p.id}
@@ -207,6 +203,7 @@ export default function TryOn() {
                       <img src={p.image} alt={p.name} />
                       <div className={styles.pickerInfo}>
                         <span className={styles.pickerName}>{p.name}</span>
+                        <span className={styles.pickerMeta}>{p.fabric}</span>
                         <span className={styles.pickerPrice}>₹{p.price.toLocaleString('en-IN')}</span>
                       </div>
                       {selectedProduct?.id === p.id && <span className={styles.pickerCheck}>✓</span>}
@@ -217,29 +214,31 @@ export default function TryOn() {
             </div>
 
             <button
-              className={`${styles.generateBtn} ${(!userImage || !selectedProduct || loading) ? styles.disabled : ''}`}
+              className={`${styles.generateBtn} ${(!userImage || !selectedProduct || loading || !apiKeySet) ? styles.disabled : ''}`}
               onClick={handleGenerate}
-              disabled={!userImage || !selectedProduct || loading}
+              disabled={!userImage || !selectedProduct || loading || !apiKeySet}
             >
               {loading
-                ? <><RefreshCw size={16} className={styles.spinning} /> Analysing your style...</>
-                : <><Sparkles size={16} /> See It On You</>}
+                ? <><RefreshCw size={16} className={styles.spinning} />Analysing your style...</>
+                : <><Sparkles size={16} />See It On You</>}
             </button>
-            {error && <p className={styles.errorMsg}>{error}</p>}
+            {error && <div className={styles.errorMsg}><span>⚠</span>{error}</div>}
           </div>
 
-          {/* RIGHT PANEL */}
+          {/* ── RIGHT: Result ── */}
           <div className={styles.rightPanel}>
             {!result && !loading && (
               <div className={styles.placeholder}>
-                <Camera size={48} strokeWidth={1} className={styles.placeholderIcon} />
+                <div className={styles.placeholderVisual}>
+                  <Camera size={52} strokeWidth={1} />
+                </div>
                 <h3>Your Style Reading</h3>
-                <p>Upload your photo and select a garment to get a personalised AI style description.</p>
-                <div className={styles.howItWorks}>
-                  <h4>How it works</h4>
-                  {['Upload a clear photo of yourself', 'Choose a linen piece from our collection', 'Our AI reads your photo + the garment', 'Get a personal fit, colour & style guide'].map((s, i) => (
-                    <div key={i} className={styles.howStep}>
-                      <span>{String(i+1).padStart(2,'0')}</span><p>{s}</p>
+                <p>Complete all steps on the left to receive a personalised AI style description tailored to you.</p>
+                <div className={styles.steps}>
+                  {['Enter your Anthropic API key', 'Upload a clear photo', 'Select a linen piece', 'Click "See It On You"'].map((s, i) => (
+                    <div key={i} className={styles.stepHint}>
+                      <span className={styles.stepHintNum}>{i + 1}</span>
+                      <p>{s}</p>
                     </div>
                   ))}
                 </div>
@@ -248,39 +247,42 @@ export default function TryOn() {
 
             {loading && (
               <div className={styles.loadingState}>
-                <div className={styles.loadingIcon}><Sparkles size={40} strokeWidth={1} /></div>
+                <Sparkles size={40} strokeWidth={1} className={styles.loadingIcon} />
                 <h3>Reading your style...</h3>
-                <p>Analysing your photo and the selected garment.</p>
-                <div className={styles.loadingDots}><span /><span /><span /></div>
+                <p>Our AI is analysing your photo and the selected garment.</p>
+                <div className={styles.dots}><span /><span /><span /></div>
               </div>
             )}
 
             {result && selectedProduct && (
               <div className={styles.result}>
-                <div className={styles.resultHeader}>
-                  <Sparkles size={14} /><span>Your Personal Style Reading</span>
-                </div>
+                <div className={styles.resultBadge}><Sparkles size={13} />Personal Style Reading</div>
                 <div className={styles.resultProduct}>
                   <img src={selectedProduct.image} alt={selectedProduct.name} />
                   <div>
-                    <p className={styles.resultProductName}>{selectedProduct.name}</p>
-                    <p className={styles.resultProductFabric}>{selectedProduct.fabric}</p>
+                    <p className={styles.rProductName}>{selectedProduct.name}</p>
+                    <p className={styles.rProductFabric}>{selectedProduct.fabric}</p>
+                    <p className={styles.rProductPrice}>₹{selectedProduct.price.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
-                <div className={styles.resultText}>
-                  {result.split('\n').filter(Boolean).map((para, i) => <p key={i}>{para}</p>)}
+                <div className={styles.resultBody}>
+                  {result.split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
                 </div>
                 <div className={styles.resultActions}>
-                  <Link to={`/product/${selectedProduct.id}`} className={styles.shopNowBtn}>
+                  <Link to={`/product/${selectedProduct.id}`} className={styles.shopBtn}>
                     Shop This Piece <ArrowRight size={14} />
                   </Link>
-                  <button className={styles.tryAnotherBtn} onClick={() => setResult(null)}>Try Another</button>
+                  <button className={styles.tryAgainBtn} onClick={() => setResult(null)}>Try Another</button>
                 </div>
               </div>
             )}
           </div>
         </div>
-        <p className={styles.disclaimer}>Your photo is processed securely and never stored. AI descriptions are for guidance only.</p>
+
+        <p className={styles.disclaimer}>
+          Your API key and photo are never stored on our servers. All processing happens in your browser session only.
+          Style descriptions are AI-generated guidance — actual fit may vary.
+        </p>
       </div>
     </main>
   );

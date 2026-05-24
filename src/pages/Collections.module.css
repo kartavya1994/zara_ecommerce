@@ -1,38 +1,252 @@
-.main { padding-top: calc(var(--nav-height) + var(--topbar-height)); padding-bottom: 80px; }
+.main { padding-top: calc(var(--nav-height) + var(--catbar-height)); padding-bottom: 80px; }
 
-.pageHeader { text-align: center; padding: 60px 0 50px; }
-.eyebrow { display: block; font-size: 10px; letter-spacing: 0.28em; color: var(--azure); text-transform: uppercase; margin-bottom: 14px; }
-.pageHeader h1 { font-family: var(--font-heading); font-size: clamp(32px, 5vw, 52px); font-weight: 400; margin-bottom: 14px; }
-.pageHeader p { font-size: 15px; color: var(--grey-500); font-style: italic; font-family: var(--font-display); }
+/* ── LANDING HERO ───────────────────────────────────────────── */
+.colHero {
+  background: var(--deep-blue); padding: 72px 28px 64px; text-align: center;
+}
+.colHeroText { max-width: 600px; margin: 0 auto; }
+.colHeroEye {
+  display: block; font-size: 10px; letter-spacing: 0.32em; color: var(--azure-light);
+  text-transform: uppercase; margin-bottom: 14px; font-weight: 600; font-family: var(--font-body);
+}
+.colHero h1 {
+  font-family: var(--font-heading); font-size: clamp(34px, 5.5vw, 56px); font-weight: 700;
+  color: white; margin-bottom: 16px; letter-spacing: 0.04em;
+}
+.colHero p {
+  font-size: 15px; color: rgba(255,255,255,0.68); line-height: 1.8;
+  font-family: var(--font-body); max-width: 480px; margin: 0 auto;
+}
 
-.collectionsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-.colCard { display: block; overflow: hidden; border: 1px solid var(--grey-200); transition: border-color var(--transition); }
-.colCard:hover { border-color: var(--sand); }
-.colImgWrap { position: relative; overflow: hidden; aspect-ratio: 16/9; }
-.colImgWrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s ease; }
-.colCard:hover .colImgWrap img { transform: scale(1.04); }
-.colOverlay { position: absolute; inset: 0; }
-.colInfo { padding: 28px 28px 32px; }
-.colTagline { display: block; font-size: 10px; letter-spacing: 0.2em; color: var(--azure); text-transform: uppercase; margin-bottom: 10px; font-style: italic; }
-.colInfo h2 { font-family: var(--font-heading); font-size: 26px; font-weight: 400; margin-bottom: 10px; }
-.colInfo p { font-size: 13px; color: var(--grey-700); line-height: 1.7; margin-bottom: 20px; }
-.colExplore { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.12em; color: var(--azure); border-bottom: 1px solid var(--sand); padding-bottom: 2px; }
+/* ── THEME TILES ────────────────────────────────────────────── */
+.themeTiles {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin: 48px 0 52px;
+}
+.themeTile {
+  position: relative; aspect-ratio: 3/4; overflow: hidden;
+  border-radius: 10px; display: block;
+}
+.themeTile img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.7s ease;
+}
+.themeTile:hover img { transform: scale(1.06); }
+.themeTileOverlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,50,73,0.82) 0%, rgba(0,50,73,0.1) 55%, transparent 100%);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 22px 18px; color: white;
+}
+.themeTileName {
+  font-family: var(--font-heading); font-size: 18px; font-weight: 700; margin-bottom: 4px;
+}
+.themeTileOverlay span {
+  font-size: 11px; color: rgba(255,255,255,0.65); font-style: italic;
+  font-family: var(--font-body);
+}
 
-/* Single collection */
-.collectionHero { position: relative; height: 55vh; min-height: 380px; overflow: hidden; }
-.heroImg { width: 100%; height: 100%; object-fit: cover; }
-.heroOverlay { position: absolute; inset: 0; background: linear-gradient(to right, rgba(26,20,16,0.6) 0%, transparent 70%); }
-.heroContent { position: absolute; bottom: 60px; left: 80px; color: var(--white); max-width: 500px; }
-.heroEyebrow { display: block; font-size: 10px; letter-spacing: 0.28em; color: var(--sand-light); margin-bottom: 12px; text-transform: uppercase; }
-.heroContent h1 { font-family: var(--font-heading); font-size: clamp(36px, 6vw, 64px); font-weight: 400; margin-bottom: 14px; }
-.heroContent p { font-size: 14px; line-height: 1.7; color: rgba(253,249,244,0.8); max-width: 400px; font-family: var(--font-display); font-style: italic; }
-.collectionGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px 16px; padding: 60px 0; }
-.backRow { border-top: 1px solid var(--grey-200); padding-top: 28px; }
-.backLink { font-size: 12px; color: var(--grey-500); letter-spacing: 0.08em; transition: color var(--transition); }
-.backLink:hover { color: var(--black); }
+/* ── GENDER TABS ────────────────────────────────────────────── */
+.genderTabBar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 36px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--grey-200);
+}
+.gTab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border: 1.5px solid var(--grey-200); border-radius: 50px;
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  color: var(--grey-700); transition: all var(--transition); cursor: pointer;
+}
+.gTab:hover { border-color: var(--azure); color: var(--azure); }
+.gTabActive { background: var(--deep-blue); color: white; border-color: var(--deep-blue); }
+.gTabCount {
+  background: rgba(255,255,255,0.2); color: inherit;
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 50px;
+  min-width: 22px; text-align: center;
+}
+.gTabActive .gTabCount { background: rgba(255,255,255,0.25); color: white; }
+.gTab:not(.gTabActive) .gTabCount { background: var(--grey-100); color: var(--grey-500); }
 
+/* ── OUTFIT GRID ────────────────────────────────────────────── */
+.outfitGrid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 32px 24px;
+}
+
+/* ── OUTFIT CARD ────────────────────────────────────────────── */
+.outfitCard {
+  border: 1px solid var(--grey-200); border-radius: 14px;
+  overflow: hidden; background: white;
+  transition: box-shadow 0.35s ease, transform 0.35s ease;
+  display: flex; flex-direction: column;
+}
+.outfitCard:hover {
+  box-shadow: 0 12px 40px rgba(0,50,73,0.14);
+  transform: translateY(-4px);
+}
+
+.outfitImg {
+  position: relative; aspect-ratio: 3/4;
+  overflow: hidden; background: var(--cream);
+}
+.outfitImg img {
+  width: 100%; height: 100%; object-fit: cover; object-position: top;
+  transition: transform 0.7s ease;
+}
+.outfitCard:hover .outfitImg img { transform: scale(1.05); }
+
+.outfitImgOverlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,50,73,0.55) 0%, transparent 50%);
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 14px; opacity: 0; transition: opacity 0.35s ease;
+  align-items: flex-end;
+}
+.outfitCard:hover .outfitImgOverlay { opacity: 1; }
+
+.oHeart {
+  width: 36px; height: 36px; background: white; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--grey-500); box-shadow: 0 2px 8px rgba(0,50,73,0.2);
+  transition: all var(--transition);
+}
+.oHeart:hover { color: var(--deep-blue); }
+.hearted { color: #e74c3c !important; }
+
+.oDetailBtn {
+  display: inline-block; align-self: center; margin-bottom: 10px;
+  background: white; color: var(--deep-blue); padding: 10px 20px;
+  font-family: var(--font-body); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.1em; border-radius: 50px; text-transform: uppercase;
+  transition: all var(--transition);
+}
+.oDetailBtn:hover { background: var(--deep-blue); color: white; }
+
+.oBadge {
+  position: absolute; top: 12px; left: 12px;
+  background: var(--deep-blue); color: white;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 4px 10px; border-radius: 4px; font-family: var(--font-body);
+}
+.oSaleBadge { background: #e74c3c; top: 40px; }
+
+/* Card body */
+.outfitBody { padding: 20px 20px 22px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+.outfitMeta { display: flex; justify-content: space-between; align-items: center; }
+.outfitCategory {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--azure); font-family: var(--font-body); background: var(--light-blue);
+  padding: 3px 8px; border-radius: 4px;
+}
+.outfitFabric {
+  font-size: 10px; color: var(--grey-500); font-family: var(--font-body);
+  font-style: italic;
+}
+
+.outfitName {
+  font-family: var(--font-heading); font-size: 16px; font-weight: 700;
+  color: var(--deep-blue); line-height: 1.3; display: block;
+  transition: color var(--transition);
+}
+.outfitName:hover { color: var(--azure); }
+
+.outfitIncludes {
+  display: flex; flex-direction: column; gap: 4px; padding: 10px 0;
+  border-top: 1px solid var(--grey-100); border-bottom: 1px solid var(--grey-100);
+}
+.outfitIncludes li {
+  display: flex; gap: 8px; font-size: 12px; color: var(--grey-700);
+  font-family: var(--font-body); line-height: 1.4;
+}
+.outfitIncludes li span {
+  color: var(--azure); font-weight: 700; flex-shrink: 0;
+}
+
+.outfitColors { display: flex; gap: 6px; flex-wrap: wrap; }
+.colorPill {
+  font-size: 10px; color: var(--grey-700); font-family: var(--font-body);
+  border: 1px solid var(--grey-200); padding: 3px 8px; border-radius: 50px;
+}
+.colorMore { font-size: 10px; color: var(--grey-500); align-self: center; }
+
+.outfitFooter {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--grey-100);
+}
+.outfitPrice {
+  font-family: var(--font-body); font-size: 18px; font-weight: 700;
+  color: var(--deep-blue);
+}
+.outfitOriginal {
+  font-size: 12px; color: var(--grey-500); text-decoration: line-through;
+  font-family: var(--font-body);
+}
+.oAddBtn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--deep-blue); color: white;
+  padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  font-family: var(--font-body); letter-spacing: 0.06em;
+  transition: background var(--transition);
+}
+.oAddBtn:hover { background: var(--azure); }
+
+/* ── THEME HERO ─────────────────────────────────────────────── */
+.themeHero {
+  position: relative; height: 56vh; min-height: 380px; overflow: hidden;
+}
+.themeHeroImg { width: 100%; height: 100%; object-fit: cover; }
+.themeHeroOverlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(0,50,73,0.72) 0%, rgba(0,50,73,0.15) 55%, transparent 100%);
+}
+.themeHeroContent {
+  position: absolute; bottom: 56px; left: 56px; color: white; max-width: 500px;
+}
+.themeHeroEye {
+  display: block; font-size: 10px; letter-spacing: 0.3em; color: rgba(255,255,255,0.65);
+  text-transform: uppercase; margin-bottom: 12px; font-family: var(--font-body);
+}
+.themeHeroContent h1 {
+  font-family: var(--font-heading); font-size: clamp(36px, 6vw, 64px);
+  font-weight: 700; margin-bottom: 14px;
+}
+.themeHeroContent p {
+  font-size: 15px; color: rgba(255,255,255,0.75); line-height: 1.75;
+  font-family: var(--font-body); font-style: italic;
+}
+
+/* ── EMPTY / BACK ───────────────────────────────────────────── */
+.emptyState {
+  text-align: center; padding: 80px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  color: var(--grey-500);
+}
+.emptyBtn {
+  background: var(--deep-blue); color: white; padding: 12px 28px;
+  border-radius: 8px; font-size: 13px; font-weight: 600;
+  font-family: var(--font-body); transition: background var(--transition);
+}
+.emptyBtn:hover { background: var(--azure); }
+.backRow { border-top: 1px solid var(--grey-200); padding-top: 28px; margin-top: 48px; }
+.backLink {
+  font-size: 13px; color: var(--grey-500); letter-spacing: 0.06em;
+  transition: color var(--transition); font-family: var(--font-body);
+}
+.backLink:hover { color: var(--deep-blue); }
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .outfitGrid { grid-template-columns: repeat(2, 1fr); }
+  .themeTiles { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 768px) {
-  .collectionsGrid { grid-template-columns: 1fr; }
-  .collectionGrid { grid-template-columns: repeat(2, 1fr); }
-  .heroContent { left: 28px; bottom: 40px; }
+  .themeHeroContent { left: 28px; bottom: 36px; }
+  .genderTabBar { gap: 6px; }
+  .gTab { padding: 8px 14px; font-size: 12px; }
+}
+@media (max-width: 600px) {
+  .outfitGrid { grid-template-columns: 1fr; }
+  .themeTiles { grid-template-columns: 1fr 1fr; }
 }
