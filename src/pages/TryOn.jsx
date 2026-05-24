@@ -1,278 +1,293 @@
 import { useState, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Upload, X, Sparkles, RefreshCw, ArrowRight, Camera, Key } from 'lucide-react';
+import { Upload, X, Copy, Check, ArrowRight, Camera, ExternalLink, Sparkles } from 'lucide-react';
 import { getProductById, products } from '../data/products';
 import styles from './TryOn.module.css';
 
-async function callClaudeVision(apiKey, imageBase64, imageType, product) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 800,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: imageType, data: imageBase64 }
-          },
-          {
-            type: 'text',
-            text: `You are a personal fashion stylist at Regent & Row, a luxury Indian linen brand.
+function buildPrompt(product, color) {
+  return `I am shopping at Regent & Row, a luxury Indian linen brand, and I am considering buying this outfit:
 
-A customer has shared their photo. They are considering: "${product.name}"
-Fabric: ${product.fabric}
-Available colours: ${product.colors.join(', ')}
-About this piece: ${product.description}
+👗 OUTFIT: ${product.name}
+🎨 COLOUR I'M CONSIDERING: ${color || product.colors[0]}
+🧵 FABRIC: ${product.fabric}
+📦 WHAT'S INCLUDED: ${product.outfit?.includes?.join(', ') || product.name}
+📝 ABOUT THIS PIECE: ${product.description}
+💡 STYLING TIP FROM THE BRAND: ${product.outfit?.styling || 'Style as you wish.'}
 
-Write a warm, personalised 150-word style reading in second person. Cover:
-1. How this garment's silhouette will suit their body type
-2. Which colour will complement them best and why
-3. How the linen will feel in Indian/tropical heat
-4. One precise styling suggestion
+I have attached a photo of myself above. Please act as a personal fashion stylist and give me a warm, detailed style reading (about 150 words) covering:
+1. How this outfit's silhouette and cut will suit my body type specifically
+2. Whether the colour "${color || product.colors[0]}" will complement my skin tone, and if not which colour from these options would suit me better: ${product.colors.join(', ')}
+3. How the linen fabric will feel and look on me in Indian/tropical heat
+4. One precise styling suggestion — what to pair this with
 
-Be warm, specific, and aspirational — like a luxury boutique stylist.`
-          }
-        ]
-      }]
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API error ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.content?.[0]?.text || '';
+Be warm, specific, and aspirational. End with a one-line confidence boost about my personal style.`;
 }
 
 export default function TryOn() {
   const [searchParams] = useSearchParams();
   const defaultProduct = searchParams.get('product') ? getProductById(searchParams.get('product')) : null;
 
-  const [apiKey, setApiKey] = useState('');
-  const [apiKeySet, setApiKeySet] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(defaultProduct);
+  const [selectedColor, setSelectedColor] = useState(defaultProduct?.colors[0] || '');
   const [userImage, setUserImage] = useState(null);
-  const [userImageBase64, setUserImageBase64] = useState(null);
-  const [userImageType, setUserImageType] = useState('image/jpeg');
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [dragOver, setDragOver] = useState(false);
   const [gender, setGender] = useState('all');
+  const [copied, setCopied] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [step, setStep] = useState(1); // 1=select, 2=ready
   const fileInputRef = useRef(null);
 
-  const tryOnProducts = products.filter(p => p.category !== 'sale' &&
-    (gender === 'all' || p.category === gender));
+  const tryOnProducts = products.filter(p =>
+    p.category !== 'sale' &&
+    (gender === 'all' || p.category === gender)
+  );
 
   const handleFile = useCallback((file) => {
-    if (!file?.type.startsWith('image/')) { setError('Please upload a valid image (JPG, PNG, WEBP).'); return; }
-    if (file.size > 8 * 1024 * 1024) { setError('Image must be under 8MB.'); return; }
-    setError(null);
-    setUserImageType(file.type || 'image/jpeg');
+    if (!file?.type.startsWith('image/')) return;
     setUserImage(URL.createObjectURL(file));
-    const reader = new FileReader();
-    reader.onload = e => setUserImageBase64(e.target.result.split(',')[1]);
-    reader.readAsDataURL(file);
-    setResult(null);
   }, []);
 
-  const handleGenerate = async () => {
-    if (!userImageBase64 || !selectedProduct || !apiKey) return;
-    setLoading(true); setError(null); setResult(null);
+  const handleCopyPrompt = async () => {
+    if (!selectedProduct) return;
+    const prompt = buildPrompt(selectedProduct, selectedColor);
     try {
-      const text = await callClaudeVision(apiKey, userImageBase64, userImageType, selectedProduct);
-      setResult(text);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = prompt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
     }
   };
 
+  const handleOpenClaude = () => {
+    window.open('https://claude.ai', '_blank', 'noopener,noreferrer');
+  };
+
+  const isReady = selectedProduct && userImage;
+
   return (
     <main className={styles.main}>
-      {/* Hero */}
+
+      {/* ── HERO ── */}
       <div className={styles.hero}>
-        <div className={styles.heroText}>
-          <span className={styles.eyebrow}>AI-Powered Experience</span>
+        <div className={styles.heroInner}>
+          <span className={styles.heroBadge}>✦ Free Feature</span>
           <h1>Virtual Try-On</h1>
-          <p>Upload your photo. Our AI stylist will tell you exactly how any piece looks on you — fit, colour, drape and all.</p>
+          <p>Upload your photo, select a piece, copy your personalised prompt — then paste it into Claude.ai for a free AI style reading. No account needed on our end.</p>
+          <div className={styles.heroSteps}>
+            {['Select outfit', 'Upload photo', 'Copy prompt', 'Open Claude.ai'].map((s, i) => (
+              <div key={i} className={styles.heroStep}>
+                <span>{i + 1}</span><p>{s}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="container">
         <div className={styles.layout}>
 
-          {/* ── LEFT: Steps ── */}
-          <div className={styles.leftPanel}>
+          {/* ── LEFT PANEL ── */}
+          <div className={styles.left}>
 
-            {/* Step 0: API Key */}
-            <div className={`${styles.step} ${apiKeySet ? styles.stepDone : ''}`}>
-              <div className={styles.stepNum}>{apiKeySet ? '✓' : '00'}</div>
-              <div className={styles.stepContent}>
-                <h3>Your Anthropic API Key</h3>
-                <p>Required to power the AI. Your key is never stored — used only in your browser session.</p>
-                {!apiKeySet ? (
-                  <div className={styles.apiKeyForm}>
-                    <div className={styles.apiKeyInput}>
-                      <Key size={14} />
-                      <input
-                        type="password"
-                        placeholder="sk-ant-api03-..."
-                        value={apiKey}
-                        onChange={e => setApiKey(e.target.value)}
-                      />
-                    </div>
-                    <button
-                      className={styles.apiKeyBtn}
-                      onClick={() => { if (apiKey.startsWith('sk-ant')) setApiKeySet(true); else setError('Please enter a valid Anthropic API key (starts with sk-ant)'); }}
-                    >
-                      Confirm Key
-                    </button>
-                    <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener noreferrer" className={styles.getKeyLink}>
-                      Get a free API key →
-                    </a>
-                  </div>
-                ) : (
-                  <div className={styles.keyConfirmed}>
-                    <span>✓ API key confirmed</span>
-                    <button onClick={() => { setApiKeySet(false); setApiKey(''); }} className={styles.changeKey}>Change</button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Step 1: Photo */}
-            <div className={styles.step}>
-              <div className={styles.stepNum}>01</div>
-              <div className={styles.stepContent}>
-                <h3>Your Photo</h3>
-                <p>Well-lit, full or upper body. Front-facing works best.</p>
-                {!userImage ? (
-                  <div
-                    className={`${styles.dropzone} ${dragOver ? styles.dragOver : ''}`}
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <input ref={fileInputRef} type="file" accept="image/*"
-                      className={styles.fileInput} onChange={e => handleFile(e.target.files[0])} />
-                    <Upload size={26} strokeWidth={1.5} />
-                    <p>Drop photo here or click to browse</p>
-                    <span>JPG · PNG · WEBP · Max 8MB</span>
-                  </div>
-                ) : (
-                  <div className={styles.uploadedWrap}>
-                    <img src={userImage} alt="Your photo" className={styles.uploadedImg} />
-                    <button className={styles.removeImg} onClick={() => { setUserImage(null); setUserImageBase64(null); setResult(null); }}>
-                      <X size={14} /> Change photo
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Step 2: Product */}
-            <div className={styles.step}>
-              <div className={styles.stepNum}>02</div>
-              <div className={styles.stepContent}>
-                <h3>Choose a Piece</h3>
-                <p>Select the linen garment you want to try on.</p>
-                <div className={styles.genderTabs}>
-                  {[['all','All'],['women','Women'],['men','Men'],['resort','Resort']].map(([v,l]) => (
-                    <button key={v} className={`${styles.genderTab} ${gender===v ? styles.activeTab : ''}`}
-                      onClick={() => setGender(v)}>{l}</button>
-                  ))}
+            {/* STEP 1: Select Product */}
+            <div className={styles.stepCard}>
+              <div className={styles.stepHeader}>
+                <div className={styles.stepBadge}>01</div>
+                <div>
+                  <h3>Choose Your Outfit</h3>
+                  <p>Select the linen piece you want to try on</p>
                 </div>
-                <div className={styles.productPicker}>
-                  {tryOnProducts.map(p => (
-                    <button key={p.id}
-                      className={`${styles.pickerItem} ${selectedProduct?.id === p.id ? styles.pickerActive : ''}`}
-                      onClick={() => { setSelectedProduct(p); setResult(null); }}>
+              </div>
+
+              <div className={styles.genderTabs}>
+                {[['all','All'],['women','Women'],['men','Men'],['kids','Kids'],['resort','Resort']].map(([v,l]) => (
+                  <button key={v}
+                    className={`${styles.gTab} ${gender === v ? styles.gTabActive : ''}`}
+                    onClick={() => setGender(v)}>{l}</button>
+                ))}
+              </div>
+
+              <div className={styles.productList}>
+                {tryOnProducts.map(p => (
+                  <button key={p.id}
+                    className={`${styles.productItem} ${selectedProduct?.id === p.id ? styles.productActive : ''}`}
+                    onClick={() => { setSelectedProduct(p); setSelectedColor(p.colors[0]); }}>
+                    <div className={styles.productItemImg}>
                       <img src={p.image} alt={p.name} />
-                      <div className={styles.pickerInfo}>
-                        <span className={styles.pickerName}>{p.name}</span>
-                        <span className={styles.pickerMeta}>{p.fabric}</span>
-                        <span className={styles.pickerPrice}>₹{p.price.toLocaleString('en-IN')}</span>
-                      </div>
-                      {selectedProduct?.id === p.id && <span className={styles.pickerCheck}>✓</span>}
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                    <div className={styles.productItemInfo}>
+                      <span className={styles.productItemCat}>{p.category} · {p.subcategory}</span>
+                      <span className={styles.productItemName}>{p.name}</span>
+                      <span className={styles.productItemPrice}>₹{p.price.toLocaleString('en-IN')}</span>
+                    </div>
+                    {selectedProduct?.id === p.id && <span className={styles.productCheck}>✓</span>}
+                  </button>
+                ))}
               </div>
+
+              {/* Color picker */}
+              {selectedProduct && (
+                <div className={styles.colorPicker}>
+                  <p className={styles.colorLabel}>Choose colour:</p>
+                  <div className={styles.colorBtns}>
+                    {selectedProduct.colors.map(c => (
+                      <button key={c}
+                        className={`${styles.colorBtn} ${selectedColor === c ? styles.colorActive : ''}`}
+                        onClick={() => setSelectedColor(c)}>{c}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <button
-              className={`${styles.generateBtn} ${(!userImage || !selectedProduct || loading || !apiKeySet) ? styles.disabled : ''}`}
-              onClick={handleGenerate}
-              disabled={!userImage || !selectedProduct || loading || !apiKeySet}
-            >
-              {loading
-                ? <><RefreshCw size={16} className={styles.spinning} />Analysing your style...</>
-                : <><Sparkles size={16} />See It On You</>}
-            </button>
-            {error && <div className={styles.errorMsg}><span>⚠</span>{error}</div>}
+            {/* STEP 2: Upload Photo */}
+            <div className={styles.stepCard}>
+              <div className={styles.stepHeader}>
+                <div className={styles.stepBadge}>02</div>
+                <div>
+                  <h3>Upload Your Photo</h3>
+                  <p>You'll paste this into Claude.ai in the next step</p>
+                </div>
+              </div>
+
+              {!userImage ? (
+                <div
+                  className={`${styles.dropzone} ${dragOver ? styles.dragOver : ''}`}
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input ref={fileInputRef} type="file" accept="image/*"
+                    className={styles.fileInput} onChange={e => handleFile(e.target.files[0])} />
+                  <Upload size={28} strokeWidth={1.5} />
+                  <p>Drop your photo here or click to browse</p>
+                  <span>JPG · PNG · WEBP · Any size</span>
+                </div>
+              ) : (
+                <div className={styles.uploadedWrap}>
+                  <img src={userImage} alt="Your photo" className={styles.uploadedImg} />
+                  <button className={styles.changePhoto}
+                    onClick={() => { setUserImage(null); fileInputRef.current?.click(); }}>
+                    <X size={13} /> Change photo
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*"
+                    className={styles.fileInput} onChange={e => handleFile(e.target.files[0])} />
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* ── RIGHT: Result ── */}
-          <div className={styles.rightPanel}>
-            {!result && !loading && (
-              <div className={styles.placeholder}>
-                <div className={styles.placeholderVisual}>
-                  <Camera size={52} strokeWidth={1} />
-                </div>
-                <h3>Your Style Reading</h3>
-                <p>Complete all steps on the left to receive a personalised AI style description tailored to you.</p>
-                <div className={styles.steps}>
-                  {['Enter your Anthropic API key', 'Upload a clear photo', 'Select a linen piece', 'Click "See It On You"'].map((s, i) => (
-                    <div key={i} className={styles.stepHint}>
-                      <span className={styles.stepHintNum}>{i + 1}</span>
-                      <p>{s}</p>
-                    </div>
-                  ))}
+          {/* ── RIGHT PANEL ── */}
+          <div className={styles.right}>
+
+            {!isReady ? (
+              <div className={styles.waitCard}>
+                <div className={styles.waitIcon}><Camera size={48} strokeWidth={1} /></div>
+                <h3>Complete steps 01 &amp; 02</h3>
+                <p>Once you've selected an outfit and uploaded your photo, your personalised try-on prompt will appear here — ready to copy and paste into Claude.ai.</p>
+                <div className={styles.claudePreview}>
+                  <div className={styles.claudePreviewHeader}>
+                    <span>claude.ai</span>
+                    <span className={styles.claudeFree}>Free</span>
+                  </div>
+                  <p>Claude.ai is a free AI assistant that can analyse your photo and give you a detailed style reading. No sign-up required for basic use.</p>
+                  <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className={styles.claudeLink}>
+                    Visit Claude.ai <ExternalLink size={12} />
+                  </a>
                 </div>
               </div>
-            )}
-
-            {loading && (
-              <div className={styles.loadingState}>
-                <Sparkles size={40} strokeWidth={1} className={styles.loadingIcon} />
-                <h3>Reading your style...</h3>
-                <p>Our AI is analysing your photo and the selected garment.</p>
-                <div className={styles.dots}><span /><span /><span /></div>
-              </div>
-            )}
-
-            {result && selectedProduct && (
-              <div className={styles.result}>
-                <div className={styles.resultBadge}><Sparkles size={13} />Personal Style Reading</div>
-                <div className={styles.resultProduct}>
+            ) : (
+              <div className={styles.readyCard}>
+                {/* Selected product summary */}
+                <div className={styles.selectedSummary}>
                   <img src={selectedProduct.image} alt={selectedProduct.name} />
                   <div>
-                    <p className={styles.rProductName}>{selectedProduct.name}</p>
-                    <p className={styles.rProductFabric}>{selectedProduct.fabric}</p>
-                    <p className={styles.rProductPrice}>₹{selectedProduct.price.toLocaleString('en-IN')}</p>
+                    <p className={styles.summaryName}>{selectedProduct.name}</p>
+                    <p className={styles.summaryColor}>Colour: {selectedColor}</p>
+                    <p className={styles.summaryFabric}>{selectedProduct.fabric}</p>
                   </div>
                 </div>
-                <div className={styles.resultBody}>
-                  {result.split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
+
+                <div className={styles.divider} />
+
+                {/* Instructions */}
+                <div className={styles.instructions}>
+                  <h3>You're ready! Here's how:</h3>
+                  <div className={styles.instrSteps}>
+                    <div className={styles.instrStep}>
+                      <div className={styles.instrNum}>1</div>
+                      <div>
+                        <p><strong>Copy your personalised prompt</strong></p>
+                        <span>Click the button below — it copies a detailed style prompt with your outfit details</span>
+                      </div>
+                    </div>
+                    <div className={styles.instrStep}>
+                      <div className={styles.instrNum}>2</div>
+                      <div>
+                        <p><strong>Open Claude.ai</strong></p>
+                        <span>Click the button to open Claude.ai in a new tab — it's free to use</span>
+                      </div>
+                    </div>
+                    <div className={styles.instrStep}>
+                      <div className={styles.instrNum}>3</div>
+                      <div>
+                        <p><strong>Paste prompt + attach photo</strong></p>
+                        <span>Paste the prompt, then attach your photo using the 📎 button in Claude.ai</span>
+                      </div>
+                    </div>
+                    <div className={styles.instrStep}>
+                      <div className={styles.instrNum}>4</div>
+                      <div>
+                        <p><strong>Get your style reading</strong></p>
+                        <span>Claude will analyse your photo and give a personalised style description</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.resultActions}>
+
+                {/* Prompt preview */}
+                <div className={styles.promptPreview}>
+                  <div className={styles.promptPreviewHeader}>
+                    <span>Your personalised prompt</span>
+                  </div>
+                  <p className={styles.promptText}>
+                    I am shopping at Regent &amp; Row and considering: <strong>{selectedProduct.name}</strong> in <strong>{selectedColor}</strong>. I have attached my photo — please give me a personalised style reading covering fit, colour, fabric and styling...
+                  </p>
+                </div>
+
+                {/* Action buttons */}
+                <div className={styles.actionBtns}>
+                  <button className={`${styles.copyBtn} ${copied ? styles.copiedBtn : ''}`}
+                    onClick={handleCopyPrompt}>
+                    {copied
+                      ? <><Check size={16} /> Prompt Copied!</>
+                      : <><Copy size={16} /> Copy My Prompt</>}
+                  </button>
+                  <button className={styles.claudeBtn} onClick={handleOpenClaude}>
+                    <ExternalLink size={16} /> Open Claude.ai Free
+                  </button>
+                </div>
+
+                <div className={styles.tipBox}>
+                  <span>💡</span>
+                  <p>On Claude.ai, paste the prompt first, then click the <strong>📎 paperclip icon</strong> to attach your photo, then press Enter.</p>
+                </div>
+
+                {/* Shop CTA */}
+                <div className={styles.shopCta}>
+                  <p>Love what you see?</p>
                   <Link to={`/product/${selectedProduct.id}`} className={styles.shopBtn}>
-                    Shop This Piece <ArrowRight size={14} />
+                    View Full Outfit Details <ArrowRight size={14} />
                   </Link>
-                  <button className={styles.tryAgainBtn} onClick={() => setResult(null)}>Try Another</button>
                 </div>
               </div>
             )}
@@ -280,8 +295,7 @@ export default function TryOn() {
         </div>
 
         <p className={styles.disclaimer}>
-          Your API key and photo are never stored on our servers. All processing happens in your browser session only.
-          Style descriptions are AI-generated guidance — actual fit may vary.
+          Your photo is never uploaded to our servers. The try-on feature works entirely through Claude.ai, which has its own privacy policy. We have no access to your photo or Claude.ai conversation.
         </p>
       </div>
     </main>
